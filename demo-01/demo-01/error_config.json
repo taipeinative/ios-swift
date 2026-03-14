@@ -12,7 +12,7 @@
     "Difficulty": "normal",
     "False chance": 40,
     "Error": {
-      "nameMismatch": 20,
+      "nameMismatch": 15,
       "expiryInvalid": 20,
       "noPassport": 5,
       "passportCountryPatternMismatch": 5,
