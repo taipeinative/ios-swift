@@ -18,6 +18,7 @@ struct GameSettings {
     var volume: Double = 0.6
     var difficulty: Difficulty = .normal
     var penaltyEnabled: Bool = true
+    var debugMode: Bool = false
 }
 
 enum PassportPatternKind {
@@ -104,7 +105,7 @@ enum Nation: String, CaseIterable {
         case .japan:
             return "2 英文字母 + 7 位數字"
         case .southKorea:
-            return "1 英文字母 + 3 位數字 + 1 英文字母 + 4 英文字母"
+            return "1 英文字母 + 3 位數字 + 1 英文字母 + 4 位數字"
         }
     }
 
@@ -132,7 +133,7 @@ enum Nation: String, CaseIterable {
         case .japan:
             return String.randomLetters(count: 2) + String.randomDigits(count: 7)
         case .southKorea:
-            return String.randomLetters(count: 1) + String.randomDigits(count: 3) + String.randomLetters(count: 1) + String.randomLetters(count: 4)
+            return String.randomLetters(count: 1) + String.randomDigits(count: 3) + String.randomLetters(count: 1) + String.randomDigits(count: 4)
         }
     }
 
@@ -151,7 +152,7 @@ enum Nation: String, CaseIterable {
         case .southKorea:
             guard input.count == 9 else { return false }
             let chars = Array(input.uppercased())
-            return chars[0].isASCIIUppercaseLetter && chars[1...3].allSatisfy {$0.isNumber} && chars[4].isASCIIUppercaseLetter && chars[5...8].allSatisfy {$0.isASCIIUppercaseLetter}
+            return chars[0].isASCIIUppercaseLetter && chars[1...3].allSatisfy {$0.isNumber} && chars[4].isASCIIUppercaseLetter && chars[5...8].allSatisfy {$0.isNumber}
         }
     }
 }
@@ -208,6 +209,19 @@ enum Decision {
     case reject
 }
 
+enum DebugScenario: CaseIterable {
+    case normal
+    case noPassport
+    case noVisa
+    case nameMismatch
+    case sexMismatch
+    case cityMismatch
+    case passportMismatch
+    case invalidExpiryDate
+    case passportCountryPatternMismatch
+    case swappedPassportCharacters
+}
+
 struct RoundResult {
     var isCorrect: Bool
     var scoreDelta: Int
@@ -228,7 +242,7 @@ enum RuleFailure: String {
 }
 
 enum GameRuleEngine {
-    static func checkFailures(for traveller: Traveller, currentDate: Date, difficulty: Difficulty) -> [RuleFailure] {
+    static func checkFailures(for traveller: Traveller, currentDate: Date, difficulty: Difficulty, debugMode: Bool = false) -> [RuleFailure] {
         guard let passport = traveller.passport else {
             return [.noPassport]
         }
@@ -252,11 +266,11 @@ enum GameRuleEngine {
             appendUnique(.sexMismatch, to: &failures)
         }
 
-        if difficulty == .hard && !traveller.declaredNationality.cities.contains(passport.bornPlace) {
+        if (difficulty == .hard || debugMode) && !traveller.declaredNationality.cities.contains(passport.bornPlace) {
             appendUnique(.cityMismatch, to: &failures)
         }
 
-        if difficulty == .hard && passport.nationality != traveller.declaredNationality {
+        if (difficulty == .hard || debugMode) && passport.nationality != traveller.declaredNationality {
             appendUnique(.passportMismatch, to: &failures)
         }
 
@@ -282,7 +296,7 @@ enum GameRuleEngine {
                 appendUnique(.sexMismatch, to: &failures)
             }
 
-            if difficulty == .hard && visa.bornPlace != passport.bornPlace {
+            if (difficulty == .hard || debugMode) && visa.bornPlace != passport.bornPlace {
                 appendUnique(.cityMismatch, to: &failures)
             }
         }
@@ -295,9 +309,10 @@ enum GameRuleEngine {
         decision: Decision,
         currentDate: Date,
         difficulty: Difficulty,
-        penaltyEnabled: Bool
+        penaltyEnabled: Bool,
+        debugMode: Bool = false
     ) -> RoundResult {
-        let failures = checkFailures(for: traveller, currentDate: currentDate, difficulty: difficulty)
+        let failures = checkFailures(for: traveller, currentDate: currentDate, difficulty: difficulty, debugMode: debugMode)
         let shouldAllow = failures.isEmpty
         let playerAllowed = decision == .allow
         let isCorrect = shouldAllow == playerAllowed
@@ -348,15 +363,21 @@ private struct TravellerNameDataset: Codable {
 enum TravellerFactory {
     private static let fallbackName = NameVariant(name: "未知旅客", typo: "末知旅客")
 
-    static func generateTraveller(currentDate: Date, difficulty: Difficulty) -> Traveller {
-        let nationality = Nation.allCases.randomElement() ?? .taiwan
+    static func generateTraveller(currentDate: Date, difficulty: Difficulty, debugScenario: DebugScenario? = nil) -> Traveller {
+        let nationality: Nation
+        if debugScenario == .noVisa {
+            nationality = Nation.allCases.filter { $0 != .taiwan }.randomElement() ?? .japan
+        } else {
+            nationality = Nation.allCases.randomElement() ?? .taiwan
+        }
+
         let sex = TravellerSex.allCases.randomElement() ?? .male
         let nameVariant = TravellerNameRepository.shared.randomName(for: nationality, sex: sex) ?? fallbackName
         let city = nationality.cities.randomElement() ?? "Unknown"
         let passportNumber = nationality.generatePassportNumber()
 
         let validPassportExpiry = Calendar.current.date(byAdding: .day, value: Int.random(in: 220...900), to: currentDate) ?? currentDate
-        var passport: PassportDocument? = PassportDocument(
+        let passport: PassportDocument? = PassportDocument(
             name: nameVariant.name,
             passportNumber: passportNumber,
             nationality: nationality,
@@ -389,20 +410,30 @@ enum TravellerFactory {
             visa: visa
         )
 
-        injectPossibleIssue(
-            into: &traveller,
-            difficulty: difficulty,
-            currentDate: currentDate,
-            nationality: nationality,
-            nameVariant: nameVariant
-        )
+        if let debugScenario {
+            applyDebugScenario(
+                debugScenario,
+                to: &traveller,
+                currentDate: currentDate,
+                nationality: nationality,
+                typoName: nameVariant.typo
+            )
+        } else {
+            injectPossibleIssue(
+                into: &traveller,
+                difficulty: difficulty,
+                currentDate: currentDate,
+                nationality: nationality,
+                nameVariant: nameVariant
+            )
+        }
 
         return traveller
     }
 
     static func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
+        formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "zh_Hant_TW")
         return formatter.string(from: date)
     }
@@ -423,6 +454,37 @@ enum TravellerFactory {
         guard let issue = pickIssueByWeight(possible: possible, weights: config.errorWeights) else { return }
 
         apply(issue: issue, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: nameVariant.typo)
+    }
+
+    private static func applyDebugScenario(
+        _ scenario: DebugScenario,
+        to traveller: inout Traveller,
+        currentDate: Date,
+        nationality: Nation,
+        typoName: String
+    ) {
+        switch scenario {
+        case .normal:
+            break
+        case .noPassport:
+            apply(issue: .noPassport, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .noVisa:
+            apply(issue: .noVisa, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .nameMismatch:
+            apply(issue: .nameMismatch, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .sexMismatch:
+            apply(issue: .sexMismatch, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .cityMismatch:
+            apply(issue: .cityMismatch, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .passportMismatch:
+            apply(issue: .passportMismatch, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .invalidExpiryDate:
+            apply(issue: .expiryInvalid, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .passportCountryPatternMismatch:
+            apply(issue: .passportCountryPatternMismatch, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        case .swappedPassportCharacters:
+            apply(issue: .passportCharacterSwap, to: &traveller, currentDate: currentDate, nationality: nationality, typoName: typoName)
+        }
     }
 
     private static func possibleIssues(for difficulty: Difficulty, nationality: Nation) -> [TravellerIssue] {

@@ -16,6 +16,7 @@ struct StageView: View {
     @State private var gameDate: Date = Date()
     @State private var currentTraveller: Traveller?
     @State private var lastRoundResult: RoundResult?
+    @State private var debugScenarioIndex: Int = 0
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -23,7 +24,7 @@ struct StageView: View {
         GeometryReader { geo in
             ZStack(alignment: .topTrailing) {
                 HStack(spacing: 0) {
-                    chamberSection
+                    chamberSection(maxPortraitHeight: geo.size.height * 0.35)
                         .frame(width: geo.size.width * 0.3)
 
                     HStack(spacing: 0) {
@@ -33,6 +34,7 @@ struct StageView: View {
                             .frame(width: geo.size.width * 0.2)
                     }
                     .background(Color(red: 0.33, green: 0.28, blue: 0.22))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
                 headerBar
@@ -72,11 +74,16 @@ struct StageView: View {
                 }
 
                 if isGameOver {
-                    overlayPanel(title: "結算") {
+                    overlayPanel(title: "結算", showCloseButton: false) {
                         VStack(spacing: 12) {
                             Text("總分：\(score)")
                                 .font(.system(size: 28, weight: .black, design: .monospaced))
                                 .foregroundStyle(.yellow)
+
+                            PixelButton(title: "新的一局") {
+                                resetGame()
+                            }
+                            .frame(width: 180)
 
                             PixelButton(title: "回主選單") {
                                 onExit()
@@ -120,35 +127,33 @@ struct StageView: View {
         """
     }
 
-    private var chamberSection: some View {
-        VStack(spacing: 12) {
-            Text("審查室")
-                .font(.system(size: 24, weight: .black, design: .monospaced))
-                .foregroundStyle(.yellow)
-                .padding(.top, 18)
+    private func chamberSection(maxPortraitHeight: CGFloat) -> some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                Text("審查室")
+                    .font(.system(size: 24, weight: .black, design: .monospaced))
+                    .foregroundStyle(.yellow)
+                    .padding(.top, 18)
 
-            if let traveller = currentTraveller {
-                PixelPortraitView(sex: traveller.sex, index: traveller.portraitIndex)
-                    .frame(height: 215)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 6)
+                if let traveller = currentTraveller {
+                    PixelPortraitView(sex: traveller.sex, index: traveller.portraitIndex)
+                        .frame(height: maxPortraitHeight)
+                        .padding(.horizontal, 12)
+                        .padding(.top, 6)
 
-                PixelPanel(title: "旅客資料") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("姓名：\(traveller.name)")
-                        Text("性別：\(traveller.sex.rawValue)")
-                        Text("申報國籍：\(traveller.declaredNationality.rawValue)")
-                        Text("日期：\(TravellerFactory.formatDate(gameDate))")
+                    PixelPanel(title: "申報資料") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("姓名：\(traveller.name)")
+                            Text("性別：\(traveller.sex.rawValue)")
+                            Text("國籍：\(traveller.declaredNationality.rawValue)")
+                            Text("日期：\(TravellerFactory.formatDate(gameDate))")
+                        }
+                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.white)
                     }
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
-            } else {
-                Spacer()
-
-                if let result = lastRoundResult {
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
+                } else if let result = lastRoundResult {
                     PixelPanel(title: "上一輪結果") {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(result.isCorrect ? "判定正確" : "判定錯誤")
@@ -160,18 +165,19 @@ struct StageView: View {
                         .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
                 } else {
                     Text("等待旅客...")
                         .font(.system(size: 18, weight: .bold, design: .monospaced))
                         .foregroundStyle(.white)
+                        .padding(.top, 20)
                 }
-
-                Spacer()
             }
         }
         .background(Color(red: 0.21, green: 0.24, blue: 0.27))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
-            Rectangle().stroke(Color.black.opacity(0.4), lineWidth: 2)
+            RoundedRectangle(cornerRadius: 12).stroke(Color.black.opacity(0.4), lineWidth: 2)
         )
     }
 
@@ -268,7 +274,8 @@ struct StageView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.black.opacity(0.5))
-                .overlay(Rectangle().stroke(Color.white.opacity(0.9), lineWidth: 2))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.9), lineWidth: 2))
 
             Text("分數：\(score)")
                 .font(.system(size: 17, weight: .black, design: .monospaced))
@@ -276,7 +283,8 @@ struct StageView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.black.opacity(0.5))
-                .overlay(Rectangle().stroke(Color.white.opacity(0.9), lineWidth: 2))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.9), lineWidth: 2))
 
             Button {
                 isPaused = true
@@ -288,14 +296,15 @@ struct StageView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     .background(Color.blue.opacity(0.8))
-                    .overlay(Rectangle().stroke(Color.white.opacity(0.95), lineWidth: 2))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.95), lineWidth: 2))
             }
             .buttonStyle(.plain)
         }
     }
 
     @ViewBuilder
-    private func overlayPanel<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func overlayPanel<Content: View>(title: String, showCloseButton: Bool = true, @ViewBuilder content: () -> Content) -> some View {
         Color.black.opacity(0.42)
             .ignoresSafeArea()
 
@@ -305,17 +314,19 @@ struct StageView: View {
                     .font(.system(size: 30, weight: .black, design: .monospaced))
                     .foregroundStyle(.yellow)
                 Spacer()
-                Button("關閉") {
-                    showRules = false
-                    showDocumentsGuide = false
-                    if showPausePanel {
-                        isPaused = false
+                if showCloseButton {
+                    Button("關閉") {
+                        showRules = false
+                        showDocumentsGuide = false
+                        if showPausePanel {
+                            isPaused = false
+                        }
+                        showPausePanel = false
                     }
-                    showPausePanel = false
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
                 }
-                .font(.system(size: 18, weight: .black, design: .monospaced))
-                .buttonStyle(.plain)
-                .foregroundStyle(.white)
             }
 
             content()
@@ -323,8 +334,9 @@ struct StageView: View {
         .padding(20)
         .frame(maxWidth: 760)
         .background(Color(red: 0.16, green: 0.17, blue: 0.2))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            Rectangle().stroke(Color.white.opacity(0.9), lineWidth: 3)
+            RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.9), lineWidth: 3)
         )
     }
 
@@ -336,7 +348,8 @@ struct StageView: View {
                 .frame(width: 120, alignment: .center)
                 .padding(.vertical, 12)
                 .background(color.opacity(0.85))
-                .overlay(Rectangle().stroke(Color.white.opacity(0.95), lineWidth: 2))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.95), lineWidth: 2))
                 .offset(x: 8)
         }
         .buttonStyle(.plain)
@@ -351,7 +364,32 @@ struct StageView: View {
     private func startGameIfNeeded() {
         guard currentTraveller == nil && !isGameOver else { return }
         gameDate = Date()
-        currentTraveller = TravellerFactory.generateTraveller(currentDate: gameDate, difficulty: settings.difficulty)
+        currentTraveller = generateNextTraveller()
+    }
+
+    private func generateNextTraveller() -> Traveller {
+        if settings.debugMode {
+            let scenarios = DebugScenario.allCases
+            let scenario = scenarios[debugScenarioIndex % scenarios.count]
+            debugScenarioIndex += 1
+            return TravellerFactory.generateTraveller(currentDate: gameDate, difficulty: settings.difficulty, debugScenario: scenario)
+        }
+        return TravellerFactory.generateTraveller(currentDate: gameDate, difficulty: settings.difficulty)
+    }
+
+    private func resetGame() {
+        remainingSeconds = 180
+        score = 0
+        isPaused = false
+        showRules = false
+        showDocumentsGuide = false
+        showPausePanel = false
+        isTimeExpired = false
+        isGameOver = false
+        lastRoundResult = nil
+        debugScenarioIndex = 0
+        gameDate = Date()
+        currentTraveller = generateNextTraveller()
     }
 
     private func judgeCurrentTraveller(with decision: Decision) {
@@ -362,7 +400,8 @@ struct StageView: View {
             decision: decision,
             currentDate: gameDate,
             difficulty: settings.difficulty,
-            penaltyEnabled: settings.penaltyEnabled
+            penaltyEnabled: settings.penaltyEnabled,
+            debugMode: settings.debugMode
         )
 
         score += result.scoreDelta
@@ -376,7 +415,7 @@ struct StageView: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
             guard !isGameOver else { return }
-            currentTraveller = TravellerFactory.generateTraveller(currentDate: gameDate, difficulty: settings.difficulty)
+            currentTraveller = generateNextTraveller()
         }
     }
 }
@@ -400,44 +439,44 @@ struct PixelPortraitView: View {
                 ZStack(alignment: .center) {
                     Circle()
                         .fill(style.hair.opacity(0.95))
-                        .frame(width: 118, height: 118)
+                        .frame(width: 92, height: 92)
 
                     Circle()
                         .fill(style.skin)
-                        .frame(width: 100, height: 100)
+                        .frame(width: 78, height: 78)
                         .offset(y: 5)
 
                     RoundedRectangle(cornerRadius: 16)
                         .fill(style.hair)
-                        .frame(width: 106, height: 34)
-                        .offset(y: -32)
+                        .frame(width: 84, height: 24)
+                        .offset(y: -24)
 
                     RoundedRectangle(cornerRadius: 12)
                         .fill(style.hair)
-                        .frame(width: 12, height: 46)
-                        .offset(x: -42, y: -2)
+                        .frame(width: 8, height: 32)
+                        .offset(x: -32, y: -1)
 
                     RoundedRectangle(cornerRadius: 12)
                         .fill(style.hair)
-                        .frame(width: 12, height: 46)
-                        .offset(x: 42, y: -2)
+                        .frame(width: 8, height: 32)
+                        .offset(x: 32, y: -1)
 
-                    HStack(spacing: 24) {
-                        Circle().fill(style.eye).frame(width: 8, height: 8)
-                        Circle().fill(style.eye).frame(width: 8, height: 8)
+                    HStack(spacing: 20) {
+                        Circle().fill(style.eye).frame(width: 6, height: 6)
+                        Circle().fill(style.eye).frame(width: 6, height: 6)
                     }
                     .offset(y: -2)
 
                     Capsule()
                         .fill(Color.black.opacity(0.45))
-                        .frame(width: style.mouthWidth, height: 4)
-                        .offset(y: 18)
+                        .frame(width: max(8, style.mouthWidth - 6), height: 3)
+                        .offset(y: 14)
                 }
-                .padding(.top, 16)
+                .padding(.top, 10)
 
                 RoundedRectangle(cornerRadius: 10)
                     .fill(style.shirt)
-                    .frame(width: 140, height: 78)
+                    .frame(width: 98, height: 56)
                     .overlay(
                         Rectangle()
                             .stroke(Color.white.opacity(0.25), lineWidth: 1)
@@ -445,8 +484,8 @@ struct PixelPortraitView: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.white.opacity(0.2))
-                            .frame(width: 22, height: 18)
-                            .offset(y: -18)
+                            .frame(width: 16, height: 12)
+                            .offset(y: -12)
                     )
             }
         }
@@ -516,7 +555,8 @@ struct PassportCardView: View {
         }
         .padding(12)
         .background(styleColor.opacity(0.95))
-        .overlay(Rectangle().stroke(Color.white.opacity(0.95), lineWidth: 2))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.95), lineWidth: 2))
     }
 
     @ViewBuilder
@@ -550,7 +590,8 @@ struct VisaCardView: View {
         }
         .padding(12)
         .background(Color(red: 0.2, green: 0.4, blue: 0.26).opacity(0.92))
-        .overlay(Rectangle().stroke(Color.white.opacity(0.95), lineWidth: 2))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.95), lineWidth: 2))
     }
 
     @ViewBuilder
