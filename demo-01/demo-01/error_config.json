@@ -1,0 +1,38 @@
+[
+  {
+    "Difficulty": "easy",
+    "False chance": 30,
+    "Error": {
+      "nameMismatch": 20,
+      "expiryInvalid": 20,
+      "noPassport": 10
+    }
+  },
+  {
+    "Difficulty": "normal",
+    "False chance": 40,
+    "Error": {
+      "nameMismatch": 20,
+      "expiryInvalid": 20,
+      "noPassport": 5,
+      "passportCountryPatternMismatch": 5,
+      "sexMismatch": 5,
+      "noVisa": 15
+    }
+  },
+  {
+    "Difficulty": "hard",
+    "False chance": 50,
+    "Error": {
+      "nameMismatch": 10,
+      "expiryInvalid": 20,
+      "noPassport": 5,
+      "passportCountryPatternMismatch": 5,
+      "passportCharacterSwap": 10,
+      "sexMismatch": 10,
+      "noVisa": 5,
+      "cityMismatch": 10,
+      "passportMismatch": 10
+    }
+  }
+]
