@@ -26,6 +26,13 @@ struct ContentView: View {
                 .offset(y: 140)
                 .opacity(visibility)
             
+            // Subtitle Texts
+            Text("可以看到 將近是20公分的深度")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.title2)
+                .offset(x: 25, y: 140)
+            
             // Red Stripes
             Rectangle()
                 .fill(.tabasco)
@@ -33,12 +40,33 @@ struct ContentView: View {
                 .offset(x: 65, y: 175)
                 .opacity(visibility)
             
+            // Headline Title
+            Text("風聲鶴唳")
+                .foregroundColor(.yellow)
+                .fontWeight(.bold)
+                .offset(x: -80, y: 175)
+            
+            // Headline Contents
+            Text("美警告航空公司 小心鞋子炸彈")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .offset(x: 80, y: 175)
+            
             // Black Background
             Rectangle()
                 .fill(.black)
                 .frame(width: 130, height: 30)
                 .offset(x: -195, y: 175)
                 .opacity(visibility)
+            
+            // Time Display
+            Text("13:09")
+                .foregroundColor(.yellow)
+                .fontWeight(.heavy)
+                .font(.title3)
+                .offset(x: -185, y: 175)
+                .tracking(3)
+                .multilineTextAlignment(.center)
             
             // Currency Red Background
             Rectangle()
@@ -54,6 +82,55 @@ struct ContentView: View {
                 .offset(x: -173, y: 130)
                 .opacity(visibility)
             
+            // Currency Title - 1
+            Text("美")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.callout)
+                .offset(x: -222.5, y: 130)
+            
+            // Currency Title - 2
+            Text("元")
+                .foregroundColor(.white)
+                .fontWeight(.bold)
+                .font(.callout)
+                .offset(x: -222.5, y: 150)
+            
+            // Currency Subtitle - 1
+            Text("買")
+                .foregroundColor(.deepBrightRed)
+                .fontWeight(.medium)
+                .font(.callout)
+                .offset(x: -203, y: 130)
+                .blur(radius: 1)
+            
+            Text("買")
+                .foregroundColor(.white)
+                .fontWeight(.medium)
+                .font(.callout)
+                .offset(x: -203, y: 130)
+            
+            // Currency Subtitle - 2
+            Text("賣")
+                .foregroundColor(.white)
+                .fontWeight(.medium)
+                .font(.callout)
+                .offset(x: -203, y: 150)
+            
+            // Currency Contents - 1
+            Text("30.298")
+                .foregroundColor(.deepBrightRed)
+                .fontWeight(.medium)
+                .font(.callout)
+                .offset(x: -163, y: 130)
+            
+            // Currency Contents - 2
+            Text("30.301")
+                .foregroundColor(.yellow)
+                .fontWeight(.medium)
+                .font(.callout)
+                .offset(x: -163, y: 150)
+            
             // Location Red Background
             Path { path in
                 path.move(to: CGPoint(x: 152, y: 300))
@@ -64,6 +141,14 @@ struct ContentView: View {
             }
                 .fill(.tabasco)
                 .opacity(visibility)
+            
+            // Location
+            Text("南投")
+                .foregroundColor(.white)
+                .fontWeight(.heavy)
+                .offset(x: -183, y: 110)
+                .tracking(15)
+                .multilineTextAlignment(.center)
             
             // Thermometer
             Path { path in
@@ -97,6 +182,52 @@ struct ContentView: View {
                 .frame(width: 8)
                 .offset(x: 59, y: -122)
                 .opacity(visibility)
+            
+            // Thermometer - C
+            Text("C")
+                .foregroundColor(.deepBronzeMetal)
+                .fontWeight(.heavy)
+                .offset(x: 48, y: -88)
+            
+            // Thermometer - F
+            Text("F")
+                .foregroundColor(.deepBronzeMetal)
+                .fontWeight(.heavy)
+                .offset(x: 70, y: -90)
+            
+            // Hand
+            Path { path in
+                path.move(to: CGPoint(x: 300, y: 100))
+                path.addLine(to: CGPoint(x: 350, y: 110))
+                path.addLine(to: CGPoint(x: 400, y: 140))
+                path.addLine(to: CGPoint(x: 395, y: 158))
+                path.addLine(to: CGPoint(x: 345, y: 130))
+                path.addLine(to: CGPoint(x: 315, y: 170))
+                path.addLine(to: CGPoint(x: 290, y: 160))
+                path.closeSubpath()
+            }
+            
+            // Cloth
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.asphalt)
+                .frame(width: 250, height: 80)
+                .rotationEffect(.degrees(22))
+                .offset(x: -180, y: -110)
+                .opacity(visibility)
+            
+            // Reporter
+            Text("TVBS記者 廖容瑩")
+                .foregroundColor(.black)
+                .fontWeight(.bold)
+                .font(.subheadline)
+                .offset(x: -70, y: 110)
+                .blur(radius: 2)
+            
+            Text("TVBS記者 廖容瑩")
+                .foregroundColor(.sweetCorn)
+                .fontWeight(.bold)
+                .font(.subheadline)
+                .offset(x: -70, y: 110)
             
             // Title
             Image(.frozen)
