@@ -4,10 +4,9 @@ struct ContentView: View {
     let visibility: Double = 1
     var body: some View {
         ZStack{
-            Image(.snow)
-                .resizable()
-                .scaledToFit()
-                .opacity(1-visibility)
+            // Background
+            Color.black
+                .ignoresSafeArea()
             
             // Snow
             Rectangle()
@@ -150,6 +149,44 @@ struct ContentView: View {
                 .tracking(15)
                 .multilineTextAlignment(.center)
             
+            // Shadow - 1
+            Path { path in
+                path.move(to: CGPoint(x: 270, y: 210))
+                path.addLine(to: CGPoint(x: 340, y: 190))
+                path.addLine(to: CGPoint(x: 465, y: 195))
+                path.addLine(to: CGPoint(x: 475, y: 205))
+                path.addLine(to: CGPoint(x: 385, y: 210))
+                path.addLine(to: CGPoint(x: 350, y: 230))
+                path.addLine(to: CGPoint(x: 340, y: 225))
+                path.addLine(to: CGPoint(x: 320, y: 220))
+                path.addLine(to: CGPoint(x: 267, y: 228))
+                path.closeSubpath()
+            }
+                .fill(.martini)
+                .opacity(visibility)
+            
+            // Shadow - 2
+            Path { path in
+                path.move(to: CGPoint(x: 115, y: 205))
+                path.addLine(to: CGPoint(x: 220, y: 175))
+                path.addLine(to: CGPoint(x: 245, y: 180))
+                path.addLine(to: CGPoint(x: 240, y: 190))
+                path.addLine(to: CGPoint(x: 260, y: 188))
+                path.addLine(to: CGPoint(x: 265, y: 198))
+                path.addLine(to: CGPoint(x: 250, y: 210))
+                path.addLine(to: CGPoint(x: 277, y: 205))
+                path.addLine(to: CGPoint(x: 267, y: 228))
+                path.addLine(to: CGPoint(x: 320, y: 220))
+                path.addLine(to: CGPoint(x: 340, y: 225))
+                path.addLine(to: CGPoint(x: 328, y: 233))
+                path.addLine(to: CGPoint(x: 230, y: 250))
+                path.addLine(to: CGPoint(x: 220, y: 275))
+                path.addLine(to: CGPoint(x: 115, y: 290))
+                path.closeSubpath()
+            }
+                .fill(.coldGrey)
+                .opacity(visibility)
+            
             // Thermometer
             Path { path in
                 path.move(to: CGPoint(x: 408, y: 65))
@@ -206,10 +243,12 @@ struct ContentView: View {
                 path.addLine(to: CGPoint(x: 290, y: 160))
                 path.closeSubpath()
             }
+                .foregroundColor(.sanna)
+                .opacity(visibility)
             
             // Cloth
             RoundedRectangle(cornerRadius: 20)
-                .fill(.asphalt)
+                .fill(.stone)
                 .frame(width: 250, height: 80)
                 .rotationEffect(.degrees(22))
                 .offset(x: -180, y: -110)
