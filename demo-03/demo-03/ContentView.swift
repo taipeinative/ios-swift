@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var scrollOffset: CGFloat = 0
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 10) {
-                Heading()
-                
+            VStack {
                 List {
+                    DummyHeading()
                     SectionItem(title: "Playlists", icon: "music.note.list")
                     SectionItem(title: "Artists", icon: "music.microphone")
                     SectionItem(title: "Albums", icon: "square.stack")
@@ -15,14 +16,21 @@ struct ContentView: View {
                     SectionItem(title: "Downloaded", icon: "arrow.down.circle")
                     RecentlyAdded()
                 }
-                .scrollContentBackground(.hidden)
                 .listStyle(.plain)
                 .background(Color.clear)
+                
+                // Polyfill the header animation by tracking the scroll offset
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, newValue in
+                    scrollOffset = max(0, newValue)
+                }
             }
             .padding(.horizontal, 10)
-            .toolbar(.hidden, for: .navigationBar)
+            .overlay(alignment: .top) {
+                Heading(visible: scrollOffset < 5)
+            }
         }
-        .padding(0)
     }
 }
 
