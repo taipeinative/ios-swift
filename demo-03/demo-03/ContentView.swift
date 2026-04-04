@@ -35,5 +35,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    MenuBar(libraryView: ContentView())
 }
