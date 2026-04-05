@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct LibraryView: View {
     @State private var scrollOffset: CGFloat = 0
 
     var body: some View {
@@ -35,5 +35,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    MenuBar(libraryView: ContentView())
+    LibraryView()
 }

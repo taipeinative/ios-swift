@@ -1,31 +1,5 @@
 import SwiftUI
 
-struct MenuBar<Content: View>: View {
-    // Embedding view
-    let libraryView: Content
-    
-    // Force the tab to Library (the last tab)
-    @State private var selectedTab = 3
-    
-    var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab ("Home", systemImage: "house", value: 0) {}
-            Tab ("New", systemImage: "square.grid.2x2.fill", value: 1) {}
-            Tab ("Radio", systemImage: "dot.radiowaves.left.and.right", value: 2) {}
-            Tab("Library", image: "music.square.stack.fill", value: 3) {
-                libraryView
-                    .tint(nil)
-            }
-        }
-        .tint(.pink)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            NowPlaying()
-                .padding(.horizontal, 20)
-                .padding(.bottom, 55)
-        }
-    }
-}
-
 struct NowPlaying: View {
     @State private var playing: Bool = false
     
@@ -73,8 +47,4 @@ struct NowPlaying: View {
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: .capsule)
     }
-}
-
-#Preview {
-    MenuBar(libraryView: ContentView())
 }
