@@ -10,6 +10,9 @@ struct Demo03App: App {
 }
 
 struct ContentView: View {
+    // Enfore the black color in the light mode
+    @Environment(\.colorScheme) private var appColorScheme
+    
     // Force the tab to Library (the fourth tab)
     @State private var selectedTab = 3
     
@@ -32,13 +35,12 @@ struct ContentView: View {
                 DefaultView(title: "Search")
             }
         }
-        .tabBarMinimizeBehavior(.onScrollUp)
-        .tint(.pink)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            NowPlaying()
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory {
+            NowPlaying(inLightMode: appColorScheme == .light)
                 .padding(.horizontal, 20)
-                .padding(.bottom, 55)
         }
+        .tint(.pink)
     }
 }
 

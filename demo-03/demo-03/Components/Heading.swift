@@ -16,8 +16,9 @@ struct Heading: View {
             HStack(spacing: 10) {
                 Button(action: {}) {
                     Image(systemName: "text.badge.plus")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
-                .padding(10)
                 
                 Menu() {
                     Button(action: {})
@@ -26,8 +27,9 @@ struct Heading: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
-                .padding(10)
             }
             .font(.system(size: 26))
             .buttonStyle(.plain)
