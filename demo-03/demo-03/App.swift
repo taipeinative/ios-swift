@@ -38,7 +38,6 @@ struct ContentView: View {
         .tabBarMinimizeBehavior(.onScrollDown)
         .tabViewBottomAccessory {
             NowPlaying(inLightMode: appColorScheme == .light)
-                .padding(.horizontal, 20)
         }
         .tint(.pink)
     }

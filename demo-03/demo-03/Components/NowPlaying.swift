@@ -51,5 +51,6 @@ struct NowPlaying: View {
         .foregroundColor(inLightMode ? .black : .primary)
         .tint(inLightMode ? .black : .primary)
         .buttonStyle(.plain)
+        .padding(.horizontal, 20)
     }
 }
