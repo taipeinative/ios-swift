@@ -3,6 +3,70 @@
         "id": "1807400192",
         "title": "Photographs (feat. nokio)",
         "artist": "Dabin",
-        "url": "https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/f0/ab/90/f0ab9038-7729-c0c7-3fe8-0aa061c54e32/Jobeb1f0cd2-7816-486a-b89d-a574a2d0ded0-190496666-PreviewImage_Preview_Image_Intermediate_nonvideo_373057617_2126449826-Time1744910399290.png/316x316bb.webp"
+        "cover": "album.cover.aura.park",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1d/4e/1b/1d4e1b80-f7b5-7b1e-6f20-6ee9d478a51e/mzaf_8034826211254108997.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1616742583",
+        "title": "Just Chatting",
+        "artist": "Synthion",
+        "cover": "album.cover.background.music",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/42/a9/2f/42a92f4b-b3c3-0826-07b8-18830d6de03a/mzaf_5729464863869443350.plus.aac.p.m4a"
+    },
+    {
+        "id": "1594916073",
+        "title": "Cosmos (feat. Meredith Bull)",
+        "artist": "Jade Key & BrillLion",
+        "cover": "album.cover.cosmos",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/bb/30/f5/bb30f5aa-c494-d26b-f41e-25f5cd798769/mzaf_6893506625853605854.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1734550554",
+        "title": "Dream of Dreaming",
+        "artist": "capo2 & KOTONOHOUSE",
+        "cover": "album.cover.dream.of.dreaming",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/9a/d2/a5/9ad2a528-315d-bb84-0f3a-01c8b1e3f8ce/mzaf_376154021062156391.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1578260173",
+        "title": "Lost In My Room",
+        "artist": "OFFICIAL HIGE DANDISM",
+        "cover": "album.cover.editorial",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/28/9e/65/289e65ba-28c5-5be0-0493-8f2d84b86cc7/mzaf_1861672906683707109.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1572859297",
+        "title": "Blame Myself",
+        "artist": "ILLENIUM & Tori Kelly",
+        "cover": "album.cover.fallen.embers",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/69/9f/55/699f55e3-c8fa-6a6f-2ab4-ddae4abcdb70/mzaf_3650310029643807173.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1575772344",
+        "title": "up to me",
+        "artist": "LANY",
+        "cover": "album.cover.gg.bb.xx",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/c2/aa/12/c2aa12ae-ab8c-4ccb-1c59-87f243eaa5aa/mzaf_17703439929538379951.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1448847049",
+        "title": "S.A.T.E.L.L.I.T.E",
+        "artist": "Camellia",
+        "cover": "album.cover.heart.of.android",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/37/21/34/3721347d-9402-0976-6048-406e7a336b27/mzaf_16740998210151463287.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1599542521",
+        "title": "BETELGEUSE",
+        "artist": "Yuuri",
+        "cover": "album.cover.ichi",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f2/8f/18/f28f1878-cdf7-53a9-b8ee-820061f41e1a/mzaf_2279947524076945183.plus.aac.ep.m4a"
+    },
+    {
+        "id": "1556175852",
+        "title": "Hold on",
+        "artist": "Justin Bieber",
+        "cover": "album.cover.justice",
+        "src": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/51/cd/9f/51cd9f46-869b-ecec-c523-161d5bd7ce15/mzaf_13559279512391199304.plus.aac.ep.m4a"
     }
 ]

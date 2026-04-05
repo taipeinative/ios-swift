@@ -2,9 +2,12 @@ import SwiftUI
 
 @main
 struct Demo03App: App {
+    @StateObject private var player = MusicPlayerService()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(player)
         }
     }
 }
@@ -12,6 +15,7 @@ struct Demo03App: App {
 struct ContentView: View {
     // Enfore the black color in the light mode
     @Environment(\.colorScheme) private var appColorScheme
+    @EnvironmentObject private var player: MusicPlayerService
     
     // Force the tab to Library (the fourth tab)
     @State private var selectedTab = 3
@@ -38,6 +42,7 @@ struct ContentView: View {
         .tabBarMinimizeBehavior(.onScrollDown)
         .tabViewBottomAccessory {
             NowPlaying(inLightMode: appColorScheme == .light)
+                .environmentObject(player)
         }
         .tint(.pink)
     }
@@ -45,4 +50,5 @@ struct ContentView: View {
 
 #Preview() {
     ContentView()
+        .environmentObject(MusicPlayerService())
 }
