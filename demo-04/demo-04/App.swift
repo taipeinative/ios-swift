@@ -16,8 +16,12 @@ struct ContentView: View {
                 HomeView()
             }
             
-            Tab("目錄", systemImage: "list.bullet") {
-                
+            Tab("主題", systemImage: "list.bullet") {
+                CatalogView()
+            }
+
+            Tab("搜尋", systemImage: "magnifyingglass", role: .search) {
+                SearchView()
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)

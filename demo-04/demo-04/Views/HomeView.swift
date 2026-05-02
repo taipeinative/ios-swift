@@ -18,11 +18,13 @@ struct HomeView: View {
     }
     
     var body: some View {
-        ZStack {
+        Group {
             ScrollView {
                 VStack(spacing: 8) {
-                    Header(title: greeting)
-                        .padding(.vertical, 20)
+                    Header(title: greeting, serif: true)
+                    
+                    Divider()
+                        .padding(.bottom, 10)
 
                     OnThisDayBlock()
 
@@ -131,4 +133,8 @@ struct HomeView: View {
             }
         }
     }
+}
+
+#Preview {
+    HomeView()
 }
