@@ -20,6 +20,10 @@ struct ContentView: View {
                 CatalogView()
             }
 
+            Tab("其他", systemImage: "ellipsis") {
+                MoreView()
+            }
+
             Tab("搜尋", systemImage: "magnifyingglass", role: .search) {
                 SearchView()
             }
