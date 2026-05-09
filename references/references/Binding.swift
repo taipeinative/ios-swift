@@ -16,6 +16,20 @@ extension Color {
     }
 }
 
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(
+        _ condition: Bool,
+        transform: (Self) -> Content
+    ) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
 func formatInteger(val: Double) -> String {
     return val.formatted(.number.precision(.fractionLength(0)))
 }
@@ -82,6 +96,37 @@ struct BindingView: View {
     }
 }
 
-#Preview {
+struct LabelSlider: View {
+    let text: String
+    let tint: Color?
+    @Binding var val: Double
+    @Binding var inRange: ClosedRange<Double>
+    
+    var body: some View {
+        HStack {
+            Text("\(text)：\(formatDouble(val: val))")
+            Spacer()
+            Slider(value: $val, in: inRange)
+                .frame(width: 150)
+                .if(tint != nil) { view in
+                    view.tint(tint)
+                }
+        }
+    }
+}
+
+#Preview("LabelSlider") {
+    @Previewable @State var inputVal: Double = 0
+    @Previewable @State var inputRange: ClosedRange<Double> = 0...5
+    
+    LabelSlider(
+        text: "測試",
+        tint: Color.pink,
+        val: $inputVal,
+        inRange: $inputRange
+    )
+}
+
+#Preview("BindingView") {
     BindingView()
 }
