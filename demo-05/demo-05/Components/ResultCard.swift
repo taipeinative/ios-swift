@@ -43,7 +43,7 @@ struct ResultCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Divider()
                         .padding(.vertical, 8)
-                    Text("You selected:")
+                    Text("你選擇了：")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text(ans.name)

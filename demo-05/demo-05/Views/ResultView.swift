@@ -8,28 +8,28 @@ struct ResultView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("Final Result")
+                Text("測驗結果")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top, 100)
                     .opacity(stage >= 1 ? 1 : 0)
                 
                 VStack(spacing: 20) {
-                    Text("Score: \(gameManager.score) / 10")
+                    Text("得分：\(gameManager.score) / 10")
                         .font(.title)
                         .foregroundColor(gameManager.score > 5 ? .green : .orange)
                     
                     HStack(spacing: 20) {
                         Button(action: { gameManager.restart() }) {
-                            Text("Back to Start")
+                            Text("重新開始")
                                 .padding()
                                 .background(Color.blue)
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
                         
-                        ShareLink(item: "I scored \(gameManager.score)/10 in the Color Name Quiz!") {
-                            Label("Share", systemImage: "square.and.arrow.up")
+                        ShareLink(item: "我在色彩名稱測驗中得到了 \(gameManager.score) / 10 分！") {
+                            Label("炫耀", systemImage: "square.and.arrow.up")
                                 .padding()
                                 .background(Color.blue.opacity(0.1))
                                 .foregroundColor(.blue)

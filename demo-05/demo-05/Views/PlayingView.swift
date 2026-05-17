@@ -11,7 +11,7 @@ struct PlayingView: View {
                 question.backgroundColor
                     .edgesIgnoringSafeArea(.all)
                 
-                Text("Question \(gameManager.currentQuestionIndex + 1) / 10")
+                Text("問題 \(gameManager.currentQuestionIndex + 1) / 10")
                     .font(.headline)
                     .padding()
                     .background(.ultraThinMaterial)
@@ -20,7 +20,7 @@ struct PlayingView: View {
             }
             
             VStack(spacing: 15) {
-                Text("Which color name best describes the background?")
+                Text("選擇最符合背景色的名稱：")
                     .font(.headline)
                     .multilineTextAlignment(.center)
                 
