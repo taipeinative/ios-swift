@@ -6,9 +6,12 @@ struct ResultView: View {
     @State private var stage = 0
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Text("測驗結果")
+        GeometryReader { geometry in
+            let isLandscape = geometry.size.width > geometry.size.height
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    Text("測驗結果")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top, 100)
@@ -21,7 +24,7 @@ struct ResultView: View {
                     
                     HStack(spacing: 20) {
                         Button(action: { gameManager.restart() }) {
-                            Text("重新開始")
+                            Label("返回", systemImage: "arrow.uturn.left")
                                 .padding()
                                 .background(Color.blue)
                                 .foregroundColor(.white)
@@ -51,7 +54,10 @@ struct ResultView: View {
                 }
                 .opacity(stage >= 3 ? 1 : 0)
             }
+            .padding(.horizontal, isLandscape ? geometry.size.width * 0.15 : 0)
             .padding(.bottom, 40)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: geometry.size.height)
         }
         .background(Color(UIColor.systemGroupedBackground))
         .edgesIgnoringSafeArea(.all)
@@ -69,6 +75,7 @@ struct ResultView: View {
                     stage = 3
                 }
             }
+        }
         }
     }
 }
