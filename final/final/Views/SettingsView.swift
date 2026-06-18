@@ -67,10 +67,10 @@ struct SettingsView: View {
         VStack(spacing: 16) {
             ZStack {
                 HalfCircleProgressShape(progress: 1)
-                    .stroke(.secondary.opacity(0.18), style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                    .stroke(AppColors.shared.prominentStroke, style: StrokeStyle(lineWidth: 16, lineCap: .round))
 
                 HalfCircleProgressShape(progress: progress)
-                    .stroke(.tint, style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                    .stroke(AppColors.shared.levelProgress, style: StrokeStyle(lineWidth: 16, lineCap: .round))
 
                 VStack(spacing: 6) {
                     Text("Lv. \(currentLevel)")
@@ -78,7 +78,7 @@ struct SettingsView: View {
 
                     Text("距離下一級還差 \(pointsToNextLevel) 分")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.shared.secondaryText)
                 }
                 .padding(.top, 44)
             }
@@ -86,7 +86,7 @@ struct SettingsView: View {
 
             Text("每 100 分升 1 級，評論字數每字 1 分，附圖每張 25 分。")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColors.shared.secondaryText)
         }
         .padding(20)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -105,10 +105,10 @@ struct SettingsView: View {
             .pickerStyle(.segmented)
         }
         .padding(20)
-        .background(.background, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(AppColors.shared.primarySurface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.secondary.opacity(0.12))
+                .stroke(AppColors.shared.standardStroke)
         }
     }
 
@@ -136,13 +136,13 @@ struct SettingsView: View {
 
             Text("匯入時會清空目前所有目標與評論，再以備份檔內容重建。")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColors.shared.secondaryText)
         }
         .padding(20)
-        .background(.background, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(AppColors.shared.primarySurface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.secondary.opacity(0.12))
+                .stroke(AppColors.shared.standardStroke)
         }
     }
 

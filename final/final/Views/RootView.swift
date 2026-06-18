@@ -10,8 +10,8 @@ struct RootView: View {
                 HomeTabView(router: router)
             }
 
-            Tab("日曆", systemImage: "calendar", value: AppTab.calendar) {
-                CalendarTabView()
+            Tab("資料庫", systemImage: "books.vertical.fill", value: AppTab.library) {
+                LibraryTabView()
             }
 
             Tab("探索", systemImage: "safari", value: AppTab.explore) {

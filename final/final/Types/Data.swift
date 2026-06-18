@@ -114,3 +114,54 @@ struct TargetAttributeData: Codable, Identifiable, Hashable {
         }
     }
 }
+
+struct AttributeDraft: Identifiable, Hashable {
+    let id: UUID
+    var type: TargetAttributeType
+    var textValue: String
+    var secondaryText: String
+    var dateValue: Date
+
+    init(id: UUID = UUID(), type: TargetAttributeType, textValue: String = "", secondaryText: String = "", dateValue: Date = .now) {
+        self.id = id
+        self.type = type
+        self.textValue = textValue
+        self.secondaryText = secondaryText
+        self.dateValue = dateValue
+    }
+
+    init(data: TargetAttributeData) {
+        id = data.id
+        type = data.type
+        textValue = data.displayValue
+        secondaryText = data.secondaryValue ?? ""
+        dateValue = data.dateValue ?? .now
+    }
+
+    var data: TargetAttributeData {
+        switch type.inputKind {
+        case .date:
+            return TargetAttributeData(id: id, type: type, textValue: nil, secondaryValue: nil, dateValue: dateValue)
+        case .link:
+            return TargetAttributeData(
+                id: id,
+                type: type,
+                textValue: textValue.nilIfEmpty,
+                secondaryValue: secondaryText.nilIfEmpty,
+                dateValue: nil
+            )
+        case .text:
+            return TargetAttributeData(id: id, type: type, textValue: textValue.nilIfEmpty, secondaryValue: nil, dateValue: nil)
+        }
+    }
+
+    func duplicated() -> AttributeDraft {
+        AttributeDraft(
+            id: UUID(),
+            type: type,
+            textValue: textValue,
+            secondaryText: secondaryText,
+            dateValue: dateValue
+        )
+    }
+}

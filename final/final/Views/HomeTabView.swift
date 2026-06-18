@@ -7,7 +7,7 @@ struct HomeTabView: View {
     @Query(sort: \Review.updated, order: .reverse) private var reviews: [Review]
     @State private var filterState = ReviewFilterState()
     @State private var showFilterSheet = false
-    @State private var deletingReview: Review?
+    @State private var deletingReviewID: UUID?
     @State private var editingReview: Review?
     @State private var viewingReview: Review?
     @State private var creatingReview = false
@@ -16,10 +16,19 @@ struct HomeTabView: View {
         reviews.filter(filterState.matches)
     }
 
+    private var currentLevel: Int {
+        let totalPoints = reviews.reduce(into: 0) { partialResult, review in
+            partialResult += review.comment.count
+            partialResult += review.photos.count * 25
+        }
+        return max(1, totalPoints / 100 + 1)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    titleRow
                     header
 
                     if filteredReviews.isEmpty {
@@ -57,7 +66,7 @@ struct HomeTabView: View {
                                     }
 
                                     Button(role: .destructive) {
-                                        deletingReview = review
+                                        deletingReviewID = review.id
                                     } label: {
                                         Label("刪除", systemImage: "trash")
                                     }
@@ -69,14 +78,14 @@ struct HomeTabView: View {
                     }
                 }
             }
-            .navigationTitle("評論日誌")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         creatingReview = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: "plus")
                             .font(.title3)
                     }
                 }
@@ -98,24 +107,74 @@ struct HomeTabView: View {
                 }
             }
             .alert("確定要刪除這則評論嗎？", isPresented: Binding(
-                get: { deletingReview != nil },
-                set: { if !$0 { deletingReview = nil } }
+                get: { deletingReviewID != nil },
+                set: { if !$0 { deletingReviewID = nil } }
             )) {
                 Button("取消", role: .cancel) {
-                    deletingReview = nil
+                    deletingReviewID = nil
                 }
                 Button("刪除", role: .destructive) {
-                    if let deletingReview {
-                        deletingReview.target?.reviews.removeAll { $0.id == deletingReview.id }
-                        modelContext.delete(deletingReview)
-                        try? modelContext.save()
+                    if let deletingReviewID {
+                        deleteReview(withID: deletingReviewID)
                     }
-                    deletingReview = nil
+                    deletingReviewID = nil
                 }
             } message: {
                 Text("刪除後將無法復原。")
             }
         }
+    }
+
+    private var titleRow: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+            HStack(alignment: .center) {
+                Text(greeting(for: timeline.date))
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(AppColors.shared.primaryText)
+
+                Spacer(minLength: 16)
+
+                Text("Lv. \(currentLevel)")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppColors.shared.levelProgress)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(AppColors.shared.levelProgress.opacity(0.12), in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(AppColors.shared.levelProgress.opacity(0.22))
+                    }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
+        }
+    }
+
+    private func greeting(for date: Date) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+
+        switch hour {
+        case 6..<12:
+            return "早安"
+        case 12..<18:
+            return "午安"
+        default:
+            return "晚安"
+        }
+    }
+
+    private func deleteReview(withID id: UUID) {
+        guard let review = reviews.first(where: { $0.id == id }) else { return }
+
+        if let target = review.target {
+            let targetID = target.id
+            target.reviews = reviews.filter { candidate in
+                candidate.id != id && candidate.target?.id == targetID
+            }
+        }
+
+        modelContext.delete(review)
+        try? modelContext.save()
     }
 
     private var header: some View {
@@ -146,7 +205,7 @@ struct HomeTabView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 8)
+        .padding(.top, 0)
     }
 }
 
@@ -195,8 +254,10 @@ struct ReviewFilterSheet: View {
             .navigationTitle("篩選")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("完成") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Label("完成", systemImage: "checkmark")
                     }
                 }
             }
@@ -206,7 +267,7 @@ struct ReviewFilterSheet: View {
 
 struct ReviewCardView: View {
     let review: Review
-    @State private var averageColor = Color.secondary.opacity(0.15)
+    @State private var averageColor = AppColors.shared.defaultImageAverageFill
 
     var body: some View {
         VStack(spacing: 0) {
@@ -237,35 +298,35 @@ struct ReviewCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(review.target?.name ?? "未指定目標")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppColors.shared.primaryText)
                     .lineLimit(2)
 
                 HStack {
                     Text(review.target?.type.title ?? "未知類型")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.shared.secondaryText)
 
                     Spacer()
 
                     Label(String(format: "%.1f", review.score), systemImage: "star.fill")
                         .font(.subheadline.bold())
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(AppColors.shared.score)
                 }
 
                 Text("第 \(review.reviewCount) 次")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.shared.secondaryText)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background)
+            .background(AppColors.shared.secondaryGroupedSurface)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(.secondary.opacity(0.12))
+                .strokeBorder(AppColors.shared.standardStroke)
         }
-        .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
+        .shadow(color: AppColors.shared.cardShadow, radius: 18, y: 8)
     }
 }
 
@@ -284,10 +345,10 @@ struct AnimatedSearchButton: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.shared.secondaryText)
 
                 Text(current + (showCursor ? "|" : ""))
-                    .foregroundStyle(current.isEmpty ? .secondary : .primary)
+                    .foregroundStyle(current.isEmpty ? AppColors.shared.secondaryText : AppColors.shared.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .font(.subheadline)
@@ -307,7 +368,7 @@ struct SearchInputBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColors.shared.secondaryText)
 
             TextField(placeholder, text: $text)
                 .focused($isFocused)
@@ -331,10 +392,10 @@ struct CircleIconButton: View {
         ZStack(alignment: .topTrailing) {
             Image(systemName: systemName)
                 .font(.title3)
-                .foregroundStyle(isActive ? .white : .primary)
+                .foregroundStyle(isActive ? AppColors.shared.inverseText : AppColors.shared.primaryText)
                 .frame(width: 44, height: 44)
                 .background(
-                    isActive ? Color.primary : Color.clear,
+                    isActive ? AppColors.shared.activeControlBackground : AppColors.shared.transparent,
                     in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                 )
                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -342,10 +403,10 @@ struct CircleIconButton: View {
             if badgeCount > 0 {
                 Text("\(badgeCount)")
                     .font(.caption2.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppColors.shared.inverseText)
                     .frame(minWidth: 18, minHeight: 18)
                     .padding(.horizontal, 4)
-                    .background(.red, in: Capsule())
+                    .background(AppColors.shared.destructive, in: Capsule())
                     .offset(x: 6, y: -6)
             }
         }

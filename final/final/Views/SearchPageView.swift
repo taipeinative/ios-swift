@@ -38,7 +38,7 @@ struct SearchPageView: View {
                 Section("目標") {
                     if matchedTargets.isEmpty {
                         Text("沒有符合的目標")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppColors.shared.secondaryText)
                     } else {
                         ForEach(matchedTargets) { target in
                             NavigationLink {
@@ -53,7 +53,7 @@ struct SearchPageView: View {
                 Section("評論") {
                     if matchedReviews.isEmpty {
                         Text("沒有符合的評論")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppColors.shared.secondaryText)
                     } else {
                         ForEach(matchedReviews) { review in
                             NavigationLink {
@@ -64,7 +64,7 @@ struct SearchPageView: View {
                                         .font(.headline)
                                     Text(review.comment.nilIfEmpty ?? "沒有評論文字")
                                         .lineLimit(2)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(AppColors.shared.secondaryText)
                                 }
                             }
                         }

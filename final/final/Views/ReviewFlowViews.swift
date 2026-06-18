@@ -47,10 +47,10 @@ struct ReviewLandingView: View {
                                 TargetRowView(target: target)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(12)
-                                    .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                    .background(AppColors.shared.secondaryGroupedSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                            .stroke(.secondary.opacity(0.12))
+                                            .stroke(AppColors.shared.standardStroke)
                                     }
                             }
                             .buttonStyle(.plain)
@@ -64,8 +64,10 @@ struct ReviewLandingView: View {
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("新增目標") {
+                Button {
                     showNewTargetSheet = true
+                } label: {
+                    Label("新增目標", systemImage: "plus")
                 }
             }
         }
@@ -116,40 +118,11 @@ struct TargetRowView: View {
 
                 Text(target.summaryText)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.shared.secondaryText)
                     .lineLimit(2)
             }
         }
         .padding(.vertical, 4)
-    }
-}
-
-enum TargetFormMode {
-    case create
-    case createForReview((Target) -> Void)
-    case edit(target: Target)
-
-    var title: String {
-        switch self {
-        case .create, .createForReview:
-            return "新增目標"
-        case .edit:
-            return "編輯目標"
-        }
-    }
-}
-
-enum ReviewFormMode {
-    case create(target: Target, onSaved: ((Review) -> Void)? = nil)
-    case edit(review: Review)
-
-    var title: String {
-        switch self {
-        case .create:
-            return "新增評論"
-        case .edit:
-            return "編輯評論"
-        }
     }
 }
 
@@ -158,6 +131,7 @@ struct TargetFormView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var name = ""
     @State private var type: TargetType = .book
@@ -166,6 +140,10 @@ struct TargetFormView: View {
     @State private var isAttributeExpanded = false
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var photos: [PhotoAttachment] = []
+
+    private var attributePalette: AttributeListPalette {
+        AttributeListPalette.colors(for: colorScheme)
+    }
 
     var body: some View {
         Form {
@@ -179,26 +157,35 @@ struct TargetFormView: View {
                     }
                 }
 
-                TextField("描述（選填）", text: $descriptions, axis: .vertical)
-                    .lineLimit(4...8)
-                    .autocorrectionDisabled()
+                MultilineInputField(
+                    placeholder: "描述（選填）",
+                    text: $descriptions,
+                    minHeight: 96
+                )
             }
 
             Section {
                 DisclosureGroup("屬性清單", isExpanded: $isAttributeExpanded) {
                     if attributes.isEmpty {
                         Text("尚未加入任何屬性")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppColors.shared.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    ForEach(Array(attributes.indices), id: \.self) { index in
+                    ForEach(attributes) { attribute in
                         AttributeEditorRow(
-                            attribute: $attributes[index],
-                            allowedTypes: type.getAttributeTypes()
+                            attribute: attributeBinding(for: attribute.id),
+                            allowedTypes: type.getAttributeTypes(),
+                            palette: attributePalette,
+                            onDuplicate: {
+                                duplicateAttribute(withID: attribute.id)
+                            }
                         ) {
-                            attributes.remove(at: index)
+                            deleteAttribute(withID: attribute.id)
                         }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 10))
+                        .listRowBackground(attributePalette.listBackground)
                     }
 
                     Button {
@@ -206,7 +193,9 @@ struct TargetFormView: View {
                     } label: {
                         Label("新增屬性", systemImage: "plus")
                     }
+                    .listRowBackground(attributePalette.listBackground)
                 }
+                .listRowBackground(attributePalette.listBackground)
             }
 
             Section("照片（最多 5 張）") {
@@ -220,8 +209,10 @@ struct TargetFormView: View {
         .navigationTitle(mode.title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("儲存") {
+                Button(role: .confirm) {
                     save()
+                } label: {
+                    Label("儲存", systemImage: "checkmark")
                 }
                 .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
@@ -264,7 +255,7 @@ struct TargetFormView: View {
         let normalizedAttributes = attributes.map(\.data)
 
         switch mode {
-        case .create:
+        case let .create(onSaved):
             let target = Target(
                 name: normalizedName,
                 type: type,
@@ -273,7 +264,10 @@ struct TargetFormView: View {
                 photos: Array(photos.prefix(5))
             )
             modelContext.insert(target)
-            dismiss()
+            onSaved?(target)
+            if onSaved == nil {
+                dismiss()
+            }
 
         case let .createForReview(handler):
             let target = Target(
@@ -297,45 +291,24 @@ struct TargetFormView: View {
 
         try? modelContext.save()
     }
-}
 
-struct AttributeDraft: Identifiable, Hashable {
-    let id: UUID
-    var type: TargetAttributeType
-    var textValue: String
-    var secondaryText: String
-    var dateValue: Date
-
-    init(id: UUID = UUID(), type: TargetAttributeType, textValue: String = "", secondaryText: String = "", dateValue: Date = .now) {
-        self.id = id
-        self.type = type
-        self.textValue = textValue
-        self.secondaryText = secondaryText
-        self.dateValue = dateValue
+    private func duplicateAttribute(withID id: UUID) {
+        guard let index = attributes.firstIndex(where: { $0.id == id }) else { return }
+        attributes.insert(attributes[index].duplicated(), at: index + 1)
     }
 
-    init(data: TargetAttributeData) {
-        id = data.id
-        type = data.type
-        textValue = data.displayValue
-        secondaryText = data.secondaryValue ?? ""
-        dateValue = data.dateValue ?? .now
+    private func deleteAttribute(withID id: UUID) {
+        Task { @MainActor in
+            attributes.removeAll { $0.id == id }
+        }
     }
 
-    var data: TargetAttributeData {
-        switch type.inputKind {
-        case .date:
-            return TargetAttributeData(id: id, type: type, textValue: nil, secondaryValue: nil, dateValue: dateValue)
-        case .link:
-            return TargetAttributeData(
-                id: id,
-                type: type,
-                textValue: textValue.nilIfEmpty,
-                secondaryValue: secondaryText.nilIfEmpty,
-                dateValue: nil
-            )
-        case .text:
-            return TargetAttributeData(id: id, type: type, textValue: textValue.nilIfEmpty, secondaryValue: nil, dateValue: nil)
+    private func attributeBinding(for id: UUID) -> Binding<AttributeDraft> {
+        Binding {
+            attributes.first { $0.id == id } ?? AttributeDraft(type: type.getAttributeTypes().first ?? .genre)
+        } set: { updatedAttribute in
+            guard let index = attributes.firstIndex(where: { $0.id == id }) else { return }
+            attributes[index] = updatedAttribute
         }
     }
 }
@@ -343,62 +316,97 @@ struct AttributeDraft: Identifiable, Hashable {
 struct AttributeEditorRow: View {
     @Binding var attribute: AttributeDraft
     let allowedTypes: [TargetAttributeType]
+    let palette: AttributeListPalette
+    let onDuplicate: () -> Void
     let onDelete: () -> Void
+    @State private var showActions = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Button(role: .destructive) {
-                    onDelete()
+            HStack(alignment: .top, spacing: 12) {
+                Menu {
+                    Button {
+                        onDuplicate()
+                    } label: {
+                        Label("複製", systemImage: "plus.square.on.square")
+                    }
+
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        Label("刪除", systemImage: "trash")
+                    }
                 } label: {
-                    Image(systemName: "trash")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.red)
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(palette.iconTint)
                         .frame(width: 32, height: 32)
-                        .background(Color.red.opacity(0.10), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
 
-                Spacer(minLength: 0)
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("屬性")
 
-                Text("屬性")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
 
-                Picker("屬性", selection: $attribute.type) {
-                    ForEach(allowedTypes, id: \.self) { type in
-                        Text(type.title).tag(type)
+                        Picker("屬性", selection: $attribute.type) {
+                            ForEach(allowedTypes, id: \.self) { type in
+                                Text(type.title).tag(type)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .tint(palette.iconTint)
+                    }
+
+                    switch attribute.type.inputKind {
+                    case .text:
+                        TextField("請輸入\(attribute.type.title)", text: $attribute.textValue)
+                            .autocorrectionDisabled()
+                            .textFieldStyle(.roundedBorder)
+                    case .date:
+                        DatePicker(attribute.type.title, selection: $attribute.dateValue, displayedComponents: .date)
+                            .labelsHidden()
+                            .datePickerStyle(.compact)
+                    case .link:
+                        TextField("顯示文字", text: $attribute.textValue)
+                            .autocorrectionDisabled()
+                            .textFieldStyle(.roundedBorder)
+                        TextField("網址", text: $attribute.secondaryText)
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .textFieldStyle(.roundedBorder)
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.navigationLink)
-                .frame(maxWidth: 180)
             }
-
-            switch attribute.type.inputKind {
-            case .text:
-                TextField("請輸入\(attribute.type.title)", text: $attribute.textValue)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
-            case .date:
-                DatePicker(attribute.type.title, selection: $attribute.dateValue, displayedComponents: .date)
-                    .datePickerStyle(.compact)
-            case .link:
-                TextField("顯示文字", text: $attribute.textValue)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
-                TextField("URL", text: $attribute.secondaryText)
-                    .keyboardType(.URL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
-            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(14)
-        .background(Color.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.secondary.opacity(0.12))
+                .strokeBorder(palette.cardStroke)
+        }
+        .contentShape(.interaction, RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .highPriorityGesture(
+            LongPressGesture(minimumDuration: 0.45)
+                .onEnded { _ in
+                    showActions = true
+                }
+        )
+        .confirmationDialog("屬性選項", isPresented: $showActions) {
+            Button {
+                onDuplicate()
+            } label: {
+                Label("複製", systemImage: "plus.square.on.square")
+            }
+
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("刪除", systemImage: "trash")
+            }
         }
     }
 }
@@ -437,7 +445,7 @@ struct PhotoAttachmentEditor: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.title3)
-                                        .foregroundStyle(.white, .black.opacity(0.65))
+                                        .foregroundStyle(AppColors.shared.inverseText, AppColors.shared.dimOverlay)
                                 }
                                 .offset(x: 6, y: -6)
                             }
@@ -465,7 +473,7 @@ struct PhotoGalleryViewer: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                AppColors.shared.fullScreenBackdrop.ignoresSafeArea()
 
                 TabView(selection: $selectedIndex) {
                     ForEach(Array(attachments.enumerated()), id: \.offset) { index, attachment in
@@ -488,12 +496,12 @@ struct PhotoGalleryViewer: View {
                     Button("完成") {
                         dismiss()
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppColors.shared.inverseText)
                 }
 
                 ToolbarItem(placement: .principal) {
                     Text("\(selectedIndex + 1) / \(attachments.count)")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppColors.shared.inverseText)
                         .font(.subheadline.weight(.semibold))
                 }
             }
@@ -541,19 +549,19 @@ struct ReviewFormView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(target.name)
                                     .font(.headline)
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(AppColors.shared.primaryText)
                                     .lineLimit(2)
 
                                 Text(target.summaryText)
                                     .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppColors.shared.secondaryText)
                                     .lineLimit(2)
                             }
 
                             Spacer()
 
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(AppColors.shared.tertiaryText)
                         }
                     }
                     .buttonStyle(.plain)
@@ -565,8 +573,10 @@ struct ReviewFormView: View {
                     HStack {
                         Text("分數")
                         Spacer()
-                        Text(String(format: "%.1f / 5.0", score))
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Label(String(format: "%.1f / 5.0 分", score), systemImage: "star.fill")
+                                .foregroundStyle(AppColors.shared.score)
+                        }
                     }
 
                     Slider(value: $score, in: 0...5, step: 0.1)
@@ -580,9 +590,11 @@ struct ReviewFormView: View {
             }
 
             Section("心得") {
-                TextField("寫下你的評論", text: $comment, axis: .vertical)
-                    .lineLimit(6...12)
-                    .autocorrectionDisabled()
+                MultilineInputField(
+                    placeholder: "寫下你的評論",
+                    text: $comment,
+                    minHeight: 144
+                )
             }
 
             Section("附圖（最多 5 張）") {
@@ -592,8 +604,10 @@ struct ReviewFormView: View {
         .navigationTitle(mode.title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("儲存") {
+                Button(role: .confirm) {
                     save()
+                } label: {
+                    Label("儲存", systemImage: "checkmark")
                 }
                 .disabled(target == nil)
             }
@@ -723,10 +737,10 @@ struct TargetPickerView: View {
                                 TargetRowView(target: target)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(12)
-                                    .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                    .background(AppColors.shared.secondaryGroupedSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                            .stroke(.secondary.opacity(0.12))
+                                            .stroke(AppColors.shared.standardStroke)
                                     }
                             }
                             .buttonStyle(.plain)
@@ -740,8 +754,10 @@ struct TargetPickerView: View {
         .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("新增目標") {
+                Button {
                     showNewTargetSheet = true
+                } label: {
+                    Label("新增目標", systemImage: "plus")
                 }
             }
         }

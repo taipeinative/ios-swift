@@ -1,6 +1,6 @@
 import Foundation
 
-enum TargetType: CaseIterable, Codable, Hashable, Sendable {
+nonisolated enum TargetType: CaseIterable, Codable, Hashable, Sendable {
     case book
     case drama
     case location
@@ -93,13 +93,13 @@ enum TargetType: CaseIterable, Codable, Hashable, Sendable {
     }
 }
 
-enum AttributeInputKind: Sendable {
+nonisolated enum AttributeInputKind: Sendable {
     case text
     case date
     case link
 }
 
-enum TargetAttributeType: CaseIterable, Codable, Hashable, Sendable {
+nonisolated enum TargetAttributeType: CaseIterable, Codable, Hashable, Sendable {
     case actor
     case address
     case artist
@@ -146,6 +146,35 @@ enum TargetAttributeType: CaseIterable, Codable, Hashable, Sendable {
             return .link
         default:
             return .text
+        }
+    }
+}
+
+enum TargetFormMode {
+    case create(onSaved: ((Target) -> Void)? = nil)
+    case createForReview((Target) -> Void)
+    case edit(target: Target)
+
+    var title: String {
+        switch self {
+        case .create, .createForReview:
+            return "新增目標"
+        case .edit:
+            return "編輯目標"
+        }
+    }
+}
+
+enum ReviewFormMode {
+    case create(target: Target, onSaved: ((Review) -> Void)? = nil)
+    case edit(review: Review)
+
+    var title: String {
+        switch self {
+        case .create:
+            return "新增評論"
+        case .edit:
+            return "編輯評論"
         }
     }
 }

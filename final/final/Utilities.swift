@@ -14,8 +14,105 @@ final class AppRouter {
 enum AppTab: Hashable {
     case search
     case home
-    case calendar
+    case library
     case explore
+}
+
+final class AppColors {
+    static let shared = AppColors()
+
+    private init() {}
+
+    let primaryText = Color.primary
+    let secondaryText = Color.secondary
+    let tertiaryText = Color(uiColor: .tertiaryLabel)
+    let inverseText = Color.white
+    let transparent = Color.clear
+
+    let primarySurface = Color(uiColor: .systemBackground)
+    let secondaryGroupedSurface = Color(uiColor: .secondarySystemGroupedBackground)
+    let tertiaryGroupedSurface = Color(uiColor: .tertiarySystemGroupedBackground)
+
+    let subtleFill = Color.secondary.opacity(0.07)
+    let faintFill = Color.secondary.opacity(0.03)
+    let defaultImageAverageFill = Color.secondary.opacity(0.15)
+    let standardStroke = Color.secondary.opacity(0.12)
+    let prominentStroke = Color.secondary.opacity(0.18)
+    let cardShadow = Color.black.opacity(0.06)
+    let dimOverlay = Color.black.opacity(0.65)
+    let fullScreenBackdrop = Color.black
+
+    let score = Color.orange
+    let link = Color.blue
+    let success = Color.green
+    let destructive = Color.red
+    let activeControlBackground = Color.primary
+    let levelProgress = Color.accentColor
+    let previewImageTextUIColor = UIColor.white
+
+    func targetColor(for type: TargetType) -> Color {
+        switch type {
+        case .book: return .red
+        case .drama: return .orange
+        case .location: return .yellow
+        case .movie: return .green
+        case .music: return .blue
+        case .other: return .purple
+        }
+    }
+
+    func attributeListPalette(for colorScheme: ColorScheme) -> AttributeListPalette {
+        switch colorScheme {
+        case .dark:
+            return AttributeListPalette(
+                listBackground: secondaryGroupedSurface,
+                cardBackground: tertiaryGroupedSurface,
+                cardStroke: Color.white.opacity(0.08),
+                iconTint: secondaryText
+            )
+        default:
+            return AttributeListPalette(
+                listBackground: secondaryGroupedSurface,
+                cardBackground: subtleFill,
+                cardStroke: Color.black.opacity(0.08),
+                iconTint: secondaryText
+            )
+        }
+    }
+}
+
+struct AttributeListPalette {
+    let listBackground: Color
+    let cardBackground: Color
+    let cardStroke: Color
+    let iconTint: Color
+
+    static func colors(for colorScheme: ColorScheme) -> AttributeListPalette {
+        AppColors.shared.attributeListPalette(for: colorScheme)
+    }
+}
+
+struct MultilineInputField: View {
+    let placeholder: String
+    @Binding var text: String
+    var minHeight: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            if text.isEmpty {
+                Text(placeholder)
+                    .foregroundStyle(AppColors.shared.tertiaryText)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 8)
+                    .allowsHitTesting(false)
+            }
+
+            TextEditor(text: $text)
+                .frame(minHeight: minHeight)
+                .scrollContentBackground(.hidden)
+                .autocorrectionDisabled()
+        }
+    }
 }
 
 enum ThemeOption: String, CaseIterable, Identifiable {
@@ -258,17 +355,9 @@ extension DateFormatter {
     }()
 }
 
-@MainActor
 extension TargetType {
     var color: Color {
-        switch self {
-        case .book: return .red
-        case .drama: return .orange
-        case .location: return .yellow
-        case .movie: return .green
-        case .music: return .blue
-        case .other: return .purple
-        }
+        AppColors.shared.targetColor(for: self)
     }
 }
 
@@ -383,10 +472,4 @@ struct HalfCircleProgressShape: Shape {
         )
         return path
     }
-}
-
-struct CalendarDay: Identifiable {
-    let id = UUID()
-    let date: Date
-    let isInDisplayedMonth: Bool
 }
