@@ -96,17 +96,7 @@ struct TargetRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Group {
-                if let image = uiImage(from: target.primaryPhoto) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Image(.placeholder)
-                        .resizable()
-                        .scaledToFill()
-                }
-            }
+            AttachmentImage(attachment: target.primaryPhoto, contentMode: .fill)
             .frame(width: 68, height: 68)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
@@ -264,6 +254,7 @@ struct TargetFormView: View {
                 photos: Array(photos.prefix(5))
             )
             modelContext.insert(target)
+            try? modelContext.save()
             onSaved?(target)
             if onSaved == nil {
                 dismiss()
@@ -278,6 +269,7 @@ struct TargetFormView: View {
                 photos: Array(photos.prefix(5))
             )
             modelContext.insert(target)
+            try? modelContext.save()
             handler(target)
 
         case let .edit(target):
@@ -286,10 +278,9 @@ struct TargetFormView: View {
             target.descriptions = normalizedDescription
             target.attributes = normalizedAttributes
             target.photos = Array(photos.prefix(5))
+            try? modelContext.save()
             dismiss()
         }
-
-        try? modelContext.save()
     }
 
     private func duplicateAttribute(withID id: UUID) {
@@ -415,14 +406,25 @@ struct PhotoAttachmentEditor: View {
     @Binding var pickerItems: [PhotosPickerItem]
     @Binding var attachments: [PhotoAttachment]
     let limit: Int
+    @State private var isShowingPhotoPicker = false
+    @State private var isShowingURLPrompt = false
+    @State private var imageURLText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PhotosPicker(
-                selection: $pickerItems,
-                maxSelectionCount: limit,
-                matching: .images
-            ) {
+            Menu {
+                Button {
+                    presentPhotoLibrary()
+                } label: {
+                    Label("從圖庫選擇", systemImage: "photo.on.rectangle")
+                }
+
+                Button {
+                    presentURLPrompt()
+                } label: {
+                    Label("輸入圖片網址", systemImage: "link")
+                }
+            } label: {
                 Label("選擇照片", systemImage: "photo.on.rectangle")
             }
             .disabled(attachments.count >= limit)
@@ -432,13 +434,9 @@ struct PhotoAttachmentEditor: View {
                     HStack(spacing: 12) {
                         ForEach(attachments) { attachment in
                             ZStack(alignment: .topTrailing) {
-                                if let image = UIImage(data: attachment.data) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 92, height: 92)
-                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                }
+                                AttachmentImage(attachment: attachment, contentMode: .fill, placeholderPadding: 16)
+                                    .frame(width: 92, height: 92)
+                                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                                 Button {
                                     attachments.removeAll { $0.id == attachment.id }
@@ -454,6 +452,56 @@ struct PhotoAttachmentEditor: View {
                 }
             }
         }
+        .photosPicker(
+            isPresented: $isShowingPhotoPicker,
+            selection: $pickerItems,
+            maxSelectionCount: limit,
+            matching: .images
+        )
+        .alert("輸入圖片網址", isPresented: $isShowingURLPrompt) {
+            TextField("https://example.com/image.jpg", text: $imageURLText)
+                .keyboardType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+
+            Button("取消", role: .cancel) {}
+            Button("加入") {
+                addRemoteAttachment()
+            }
+        } message: {
+            Text("若圖片載入失敗，畫面會自動改用預設圖片。")
+        }
+    }
+
+    private func presentPhotoLibrary() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            isShowingPhotoPicker = true
+        }
+    }
+
+    private func presentURLPrompt() {
+        imageURLText = ""
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            isShowingURLPrompt = true
+        }
+    }
+
+    private func addRemoteAttachment() {
+        let normalizedURLText = imageURLText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedURLText.isEmpty, attachments.count < limit else { return }
+
+        let attachment = PhotoAttachment(urlString: normalizedURLText)
+        guard attachment.url != nil else { return }
+
+        let normalizedURL = attachment.url?.absoluteString.localizedLowercase
+        if attachments.contains(where: { $0.url?.absoluteString.localizedLowercase == normalizedURL }) {
+            return
+        }
+
+        attachments.append(attachment)
     }
 }
 
@@ -478,13 +526,9 @@ struct PhotoGalleryViewer: View {
                 TabView(selection: $selectedIndex) {
                     ForEach(Array(attachments.enumerated()), id: \.offset) { index, attachment in
                         ZStack {
-                            if let image = UIImage(data: attachment.data) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .tag(index)
-                            }
+                            AttachmentImage(attachment: attachment, contentMode: .fit, placeholderPadding: 32)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .tag(index)
                         }
                         .padding(.horizontal, 12)
                     }
@@ -532,17 +576,7 @@ struct ReviewFormView: View {
                         showTargetPicker = true
                     } label: {
                         HStack(spacing: 12) {
-                            Group {
-                                if let image = uiImage(from: target.primaryPhoto) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                } else {
-                                    Image(.placeholder)
-                                        .resizable()
-                                        .scaledToFill()
-                                }
-                            }
+                            AttachmentImage(attachment: target.primaryPhoto, contentMode: .fill)
                             .frame(width: 72, height: 72)
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 

@@ -1,0 +1,483 @@
+{
+  "targets": [
+    {
+      "id": "6b8d6894-bc7c-4500-a300-62cdcb154afa",
+      "name": "GNOSIA",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "34b8f60d-511a-4b1a-a47d-f80c9398ad12",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "6b577d68-5b54-4bfb-ac32-b9899f02b3fe",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "科幻",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "ca20b6f8-29ff-4a59-a1a3-181496c53685",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 781876800
+        },
+        {
+          "id": "72e11280-0b99-4a5a-aaf4-118de95127f6",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=142615",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：グノーシア",
+      "photos": [
+        {
+          "id": "def9a5de-44d6-40de-a247-eb5d51a5504f",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/15/0000142615.JPG"
+        }
+      ]
+    },
+    {
+      "id": "c6f2a8f7-664b-4de1-afeb-0497d453ac06",
+      "name": "Silent Witch 沉默魔女的祕密",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "7deaf779-8f98-406e-a7a5-9d11e06ffec4",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "66c5702d-24ac-4146-a454-70266ad9b73b",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "奇幻、戀愛、校園",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "33299518-a147-4b69-ab15-64f0f14b0036",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 773323200
+        },
+        {
+          "id": "996073fd-778b-4b31-ab48-a5cb943b0426",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=140667",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：サイレント・ウィッチ 沈黙の魔女の隠しごと",
+      "photos": [
+        {
+          "id": "23933a26-16af-4e1f-a3df-6b868bcf1a0a",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/67/0000140667.JPG"
+        }
+      ]
+    },
+    {
+      "id": "0e06e850-76e5-4c3e-adc4-5cd6313e16d0",
+      "name": "地下城中的人",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "427ac223-caa8-4cc0-a980-d1023041addb",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "e1af9182-cbd2-408c-a5a6-dd3e53bea4f8",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "奇幻、百合、職場",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "520e521d-c5ac-4254-a816-ee0136dc5677",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 741873600
+        },
+        {
+          "id": "4cbcd33e-efef-46cc-a66d-fb159219daa9",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=134927",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：ダンジョンの中のひと",
+      "photos": [
+        {
+          "id": "933d2252-1fe0-485a-aa0e-962340768882",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/27/0000134927.JPG"
+        }
+      ]
+    },
+    {
+      "id": "adc4f95a-e6a1-49eb-ae82-b1d04a6d2b9a",
+      "name": "Vivy -Fluorite Eye's Song-",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "7b034ce7-9f60-40f0-aa87-8ac801063077",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "9deac4d5-1b5c-4d14-a540-51de34958ab4",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動作、科幻",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "a1167113-6730-4410-a3be-092f4fee38c5",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 639144000
+        },
+        {
+          "id": "8facf8f2-8f4b-42ee-a693-bdb33c015f0b",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=115369",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：ヴィヴィ -フローライトアイズソング-",
+      "photos": [
+        {
+          "id": "508d37d1-8a28-405f-aaaf-57200ad236ed",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/69/0000115369.JPG"
+        }
+      ]
+    },
+    {
+      "id": "b08702c9-d15f-405b-a29d-4b708d30006a",
+      "name": "輝夜姬想讓人告白",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "c91ca516-1480-4ec5-a2f0-47d2e9ad10d1",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "8b722432-d641-4ad8-a332-cc80333969cd",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "喜劇、戀愛、校園",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "d4be09b1-60f3-49bf-a7f3-1af8301b4016",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 568987200
+        },
+        {
+          "id": "0c215f56-7605-4b3d-aa8f-7d9242971d2f",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=98176",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：かぐや様は告らせたい",
+      "photos": [
+        {
+          "id": "43a70d40-499d-4c05-acee-f69a164a1267",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/76/0000098176.PNG"
+        }
+      ]
+    },
+    {
+      "id": "84361145-a3b2-47de-a121-c6c634c68c60",
+      "name": "關於我轉生變成史萊姆這檔事",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "5af719f6-1147-400b-a350-6e4d160bda8b",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "2ae4214e-5923-46d8-a9ac-efd6213dfbce",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動作、奇幻、轉生",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "aa2efad7-8cff-4675-acf0-18ba9f1cce91",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 560088000
+        },
+        {
+          "id": "02805553-b932-47fc-a6d6-6e46bb814eb0",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=94601",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：転生したらスライムだった件",
+      "photos": [
+        {
+          "id": "6734dbbd-3781-4f39-a8e9-134a0e1e5af6",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/01/0000094601.JPG"
+        }
+      ]
+    },
+    {
+      "id": "e07d2e46-f111-481d-a458-c145541bacd0",
+      "name": "刀劍神域 Sword Art Online",
+      "type": {
+        "drama": {}
+      },
+      "attributes": [
+        {
+          "id": "8fb5b0c0-4397-41e8-aa08-c6daca363a33",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動畫",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "c25240f5-f14c-4503-a123-88a9dd4f06b1",
+          "type": {
+            "genre": {}
+          },
+          "textValue": "動作、戀愛、科幻",
+          "secondaryValue": null,
+          "dateValue": null
+        },
+        {
+          "id": "9bb5680e-de05-4b36-a2ae-3bb9b90be1a4",
+          "type": {
+            "releaseDate": {}
+          },
+          "textValue": null,
+          "secondaryValue": null,
+          "dateValue": 363355200
+        },
+        {
+          "id": "923367e8-a0e3-432d-aea6-c0350df3f028",
+          "type": {
+            "link": {}
+          },
+          "textValue": "作品頁面",
+          "secondaryValue": "https://acg.gamer.com.tw/acgDetail.php?s=52206",
+          "dateValue": null
+        }
+      ],
+      "descriptions": "原文標題：ソードアート・オンライン",
+      "photos": [
+        {
+          "id": "c7bab379-8bad-47be-a3d8-2449b19d69ed",
+          "kind": "remote",
+          "data": null,
+          "urlString": "https://p2.bahamut.com.tw/B/ACG/c/06/0000052206.JPG"
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "0fa15be7-3364-4c7d-a5c2-e7b0dccf0153",
+      "targetID": "6b8d6894-bc7c-4500-a300-62cdcb154afa",
+      "created": 796132800,
+      "updated": 796132800,
+      "watched": 796132800,
+      "score": 4.8,
+      "comment": "看完整個起雞皮疙瘩，沒想到狼人殺遊戲能夠被改編成這麼優秀的動畫。除了一些為了維持遊戲進行的硬設定（例如：為什麼要投票→不投票，AI 就讓太空船自爆、為什麼複數古諾西亞每晚只能抹去一個人→連他們自己都不知道 不這樣設計好人怎麼贏）外，整體敘事流暢，看得很過癮。相比起槍彈辯駁，本作多了時空輪迴、因果關係的元素，雖然增加了可以發揮的深度，不過腦容量小如我到第 11 集後開始推進主線劇情後就越來越難跟上了，需要閱讀留言區推理／原作大佬們解說才能稍微明白一點。我覺得最精彩的兩局遊戲還是主角尤里第一次當狼和解鎖主線的 15 人局，前者傳達了作為古諾西亞的掙扎與選擇，後者則是展現主角在數十次輪迴中的成長，識破狼方的陷阱並向真相邁進一步。",
+      "reviewCount": 1,
+      "photos": []
+    },
+    {
+      "id": "d45f6474-eb31-4982-afcf-cfab7de34a40",
+      "targetID": "c6f2a8f7-664b-4de1-afeb-0497d453ac06",
+      "created": 800884800,
+      "updated": 800884800,
+      "watched": 800366400,
+      "score": 4.7,
+      "comment": "本作講述女主角 莫妮卡．艾瓦雷特 作為王國頂尖的魔法師「七賢人」之一的「沉默魔女」，接下了潛入校園、暗中護衛第二王子菲力克斯的任務，並且與人們交流、自我成長的故事。莫妮卡堪稱魔法界小孤獨，有極度的社交恐懼（童年陰影所致），但在專長領域可謂無人出其右的天才，同時也很可愛。感受得到製作單位很用心，除了有劇中莫妮卡的各種表情包之外，OP 的精緻動畫也讓我感到驚豔。扣分項目主要來自劇情方面，一是第二王子撩人的毛手毛腳使我蠻反感的，二是為了塑造巴尼的負面形象，讓他抓莫妮卡的頭髮、向莫妮卡發射火球等。以拉仇恨值來說是蠻成功的，不過平心而論以巴尼的智商，應該不至於做出在別人學校撒野的行為吧（而且對象還是學生會成員）。最難過的還是中段凱西的部分，莫妮卡少數交到的好友，卻要以這樣的形式離別。",
+      "reviewCount": 2,
+      "photos": []
+    },
+    {
+      "id": "48d7bf65-bff0-400d-a797-f4a567ce480e",
+      "targetID": "0e06e850-76e5-4c3e-adc4-5cd6313e16d0",
+      "created": 795441600,
+      "updated": 795441600,
+      "watched": 794404800,
+      "score": 4.6,
+      "comment": "題材對我來說蠻新穎，是圍繞著地下城經營主題的動畫。對於地下城中的魔物、配置和現象等等的解釋都蠻有邏輯，雖然說覺得仍沒被解答的最大疑惑是為什麼要經營地下城？經營者似乎也沒有賺到什麼東西啊？在人物的刻畫上表現一般，主要賣點還是在女主克羅伊和地下城管理員蓓兒的可愛日常互動。",
+      "reviewCount": 1,
+      "photos": []
+    },
+    {
+      "id": "4c464d59-3995-4e3b-a266-7ee46c01aaff",
+      "targetID": "adc4f95a-e6a1-49eb-ae82-b1d04a6d2b9a",
+      "created": 800798400,
+      "updated": 800798400,
+      "watched": 800625600,
+      "score": 4.6,
+      "comment": "其實是先被 Apple Music 推薦劇中歌曲〈Harmony of One's Heart〉後，搜尋之後才找到的動畫，還發現原來當時和 86 同季。故事設定在 2061 年，講述女主角 DIVA 為史上第一臺自律型人工智慧機器人，並作為歌唱型機器人在一間遊樂園演出。某天她遇上了殺老師（考哥.jpg）來自未來的 AI マツモト，後者聲稱為了阻止百年後 AI 與人類的戰爭發生，需要與她合作執行「奇點計畫」扭轉未來。整體節奏掌握得不錯，大致上 2-3 集為一個單元劇。本作打戲意外地紮實，畫面和音樂氛圍營造得也很好。但論劇情來說則是中規中矩，沒有什麼反轉。劇情上兩個最大的 bug 點大概是（一）既然目標是達成人和 AI 共存的世界，且已知松本修和托瓦克組織的穩健派早有接觸，那麼マツモト的目標應該要改成在這百年內扶植他們才對？畢竟雙方利害關係大方向上一致。（二）Archive 屠殺人類的動機我還是覺得有點單薄，大概是不爽人類越來越仰賴 AI 之類的，但是這和它的使命並不衝突吧？",
+      "reviewCount": 1,
+      "photos": []
+    },
+    {
+      "id": "b3d2dc7f-3c73-4e9e-a92c-f93d7ee566f0",
+      "targetID": "b08702c9-d15f-405b-a29d-4b708d30006a",
+      "created": 795441600,
+      "updated": 795441600,
+      "watched": 795096000,
+      "score": 4.6,
+      "comment": "前三集旁白篇幅有點多，看著有些煩躁，還好後面旁白的比例比較適當，節奏和笑點還蠻不錯。",
+      "reviewCount": 2,
+      "photos": []
+    },
+    {
+      "id": "f816d2c1-9fe7-4bd6-a7ff-a918f74e2bb2",
+      "targetID": "84361145-a3b2-47de-a121-c6c634c68c60",
+      "created": 800884800,
+      "updated": 800884800,
+      "watched": 799675200,
+      "score": 4.7,
+      "comment": "趁著第四季上映來二刷。本作描述上班族三上悟在街上因隨機攻擊而死後，轉生到異世界成為史萊姆「利姆路」，憑藉著強大且越來越多的技能逐漸建設自己的理想國的故事。第一季是我目前最喜歡的章節，因為前期戰力分配合理，而且從小村落逐漸發展為城鎮的建國譚很和我的胃口。",
+      "reviewCount": 2,
+      "photos": []
+    },
+    {
+      "id": "a5a57e3c-445a-44fd-ad27-449fa313f8ac",
+      "targetID": "84361145-a3b2-47de-a121-c6c634c68c60",
+      "created": 800884800,
+      "updated": 800884800,
+      "watched": 799934400,
+      "score": 4.7,
+      "comment": "第二季重點在利姆路成為魔王的過程。契機為利姆路等人成立魔物國「朱拉·坦派斯特聯邦國」後，變為周遭部分勢力的眼中釘，在各方行動後發生了滅國級悲劇。為了復活夥伴並報仇，後半段展開了大快人心的環節：先在 33-34 集收拾法爾姆斯王國軍隊與領導層，然後經過數集籌備後在 45-48 集把克雷曼打成小丑。本作從這季開始獲得了「開會番」的稱號，認為會議篇幅過長應當縮減。我覺得藉由會議梳理各方勢力的目的挺明瞭的，畢竟謀略類的劇情很難用三言兩語交代。",
+      "reviewCount": 3,
+      "photos": []
+    },
+    {
+      "id": "b702b15e-3157-4d2f-a21c-d87e6c6a41a6",
+      "targetID": "84361145-a3b2-47de-a121-c6c634c68c60",
+      "created": 800884800,
+      "updated": 800884800,
+      "watched": 800193600,
+      "score": 4.7,
+      "comment": "雖然沒有閱讀過原作，不過體感上第三季是過渡性的章節？前半段講述法皇國「魯貝里歐斯」的老害們「七曜大師」與羅素家族在幕後搞事，最後被魯米納斯、迪亞布羅和日向狂粉尼可拉斯處理掉，這部分表現上沒有太突出的點。不過到了後半段開國祭的章節，感受的到製作單位將重心和經費放在這邊，節奏掌握的很好，彷彿回到第一季：熱鬧的氣氛、日新月異的技術、光明的未來。綜合來說，我認為本季還是略佳於前季。",
+      "reviewCount": 4,
+      "photos": []
+    },
+    {
+      "id": "d0d679ca-0658-4709-a8a8-e163e33f834f",
+      "targetID": "e07d2e46-f111-481d-a458-c145541bacd0",
+      "created": 795441600,
+      "updated": 795441600,
+      "watched": 795441600,
+      "score": 4.2,
+      "comment": "雖然是童年回憶，不過隔了一段時間再看一遍，大概和心智年齡也有關係吧，劇中主角桐谷和人在安慰人時會要其他人別單打獨鬥，等到他加入後又總愛一個人單挑；小時候看覺得很帥，長大後只覺得這人學不會教訓。再來是比如桐谷和人第二次和茅場晶彥交鋒時，結城明日奈脫口而出「你死的話，我也去死」這種話，實在是太無謀了，明明活下來後復仇更有意義吧？最後劇中的女性角色實在被刻畫得太單純了，男主有意無意的摸頭、公主抱等肢體接觸由現在的角度來看就是性騷擾，但人帥真好（？），支線劇情都在「發生事件→男主邊解決邊撩妹→女性角色暈船」循環中進行，看多了其實蠻厭煩的。不過話說回來，這部的打鬥其實還不錯，就是男主和閃耀魔眼對打、第一次使出星爆氣流斬那邊再看一次還是覺得蠻好笑的。",
+      "reviewCount": 2,
+      "photos": []
+    }
+  ]
+}

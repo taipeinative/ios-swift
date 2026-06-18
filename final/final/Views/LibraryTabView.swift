@@ -5,31 +5,22 @@ struct LibraryTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Target.name, order: .forward) private var targets: [Target]
 
-    @State private var nameQuery = ""
-    @State private var attributeQuery = ""
-    @State private var selectedTargetType: TargetType?
-    @State private var selectedAttributeType: TargetAttributeType?
-    @State private var targetToView: Target?
-    @State private var targetToEdit: Target?
+    @State private var navigationPath: [LibraryRoute] = []
+    @State private var filterState = LibraryFilterState()
     @State private var targetToDelete: Target?
-    @State private var isCreatingTarget = false
-    @FocusState private var isNameFilterFocused: Bool
-    @FocusState private var isAttributeFilterFocused: Bool
+    @State private var showFilterSheet = false
+    @FocusState private var isKeywordFocused: Bool
 
     private let cardColumns = [
         GridItem(.adaptive(minimum: 260), spacing: 16)
     ]
 
     private var filteredTargets: [Target] {
-        targets.filter { target in
-            matchesName(target)
-                && matchesTargetType(target)
-                && matchesAttribute(target)
-        }
+        targets.filter(filterState.matches)
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     filterPanel
@@ -46,40 +37,41 @@ struct LibraryTabView: View {
                         ContentUnavailableView(
                             "沒有符合的目標",
                             systemImage: "line.3.horizontal.decrease.circle",
-                            description: Text("可以調整名稱、種類或屬性篩選條件。")
+                            description: Text("可以調整搜尋關鍵字或篩選條件。")
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.top, 48)
                     } else {
                         LazyVGrid(columns: cardColumns, spacing: 16) {
                             ForEach(filteredTargets) { target in
-                                NavigationLink {
-                                    TargetDetailView(target: target)
-                                } label: {
-                                    LibraryTargetCard(target: target)
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button {
-                                        targetToView = target
-                                    } label: {
-                                        Label("檢視", systemImage: "eye")
+                                LibraryTargetCard(target: target)
+                                    .contentShape(.interaction, RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                    .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                    .onTapGesture {
+                                        navigationPath.append(.detail(target.id))
                                     }
+                                    .contextMenu {
+                                        Button {
+                                            navigationPath.append(.detail(target.id))
+                                        } label: {
+                                            Label("檢視", systemImage: "eye")
+                                        }
 
-                                    Button {
-                                        targetToEdit = target
-                                    } label: {
-                                        Label("編輯", systemImage: "square.and.pencil")
-                                    }
+                                        Button {
+                                            navigationPath.append(.edit(target.id))
+                                        } label: {
+                                            Label("編輯", systemImage: "square.and.pencil")
+                                        }
 
-                                    Button(role: .destructive) {
-                                        targetToDelete = target
-                                    } label: {
-                                        Label("刪除", systemImage: "trash")
+                                        Button(role: .destructive) {
+                                            targetToDelete = target
+                                        } label: {
+                                            Label("刪除", systemImage: "trash")
+                                        }
                                     }
-                                }
                             }
                         }
+                        .zIndex(0)
                     }
                 }
                 .padding(20)
@@ -90,25 +82,18 @@ struct LibraryTabView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        isCreatingTarget = true
+                        navigationPath.append(.create)
                     } label: {
                         Label("新增目標", systemImage: "plus")
                     }
                 }
             }
-            .navigationDestination(isPresented: $isCreatingTarget) {
-                TargetFormView(mode: .create { target in
-                    isCreatingTarget = false
-                    DispatchQueue.main.async {
-                        targetToView = target
-                    }
-                })
+            .sheet(isPresented: $showFilterSheet) {
+                LibraryFilterSheet(filterState: filterState)
+                    .presentationDetents([.medium, .large])
             }
-            .navigationDestination(item: $targetToView) { target in
-                TargetDetailView(target: target)
-            }
-            .navigationDestination(item: $targetToEdit) { target in
-                TargetFormView(mode: .edit(target: target))
+            .navigationDestination(for: LibraryRoute.self) { route in
+                destination(for: route)
             }
             .alert("確定刪除此目標與其所有評論嗎？", isPresented: Binding(
                 get: { targetToDelete != nil },
@@ -129,93 +114,102 @@ struct LibraryTabView: View {
         }
     }
 
+    @ViewBuilder
+    private func destination(for route: LibraryRoute) -> some View {
+        switch route {
+        case .create:
+            TargetFormView(mode: .create { target in
+                navigationPath = [.detail(target.id)]
+            })
+        case let .detail(targetID):
+            if let target = target(withID: targetID) {
+                TargetDetailView(target: target)
+            } else {
+                ContentUnavailableView("找不到目標", systemImage: "questionmark.folder")
+            }
+        case let .edit(targetID):
+            if let target = target(withID: targetID) {
+                TargetFormView(mode: .edit(target: target))
+            } else {
+                ContentUnavailableView("找不到目標", systemImage: "questionmark.folder")
+            }
+        }
+    }
+
     private var filterPanel: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SearchInputBar(placeholder: "以名稱篩選", text: $nameQuery, isFocused: $isNameFilterFocused)
-
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                filterPicker(title: "種類", systemImage: "square.grid.2x2") {
-                    Picker("種類", selection: $selectedTargetType) {
-                        Text("全部種類").tag(nil as TargetType?)
-                        ForEach(TargetType.allCases, id: \.self) { type in
-                            Text(type.title).tag(Optional(type))
-                        }
-                    }
-                }
+                SearchInputBar(
+                    placeholder: "搜尋關鍵字",
+                    text: Bindable(filterState).keyword,
+                    isFocused: $isKeywordFocused
+                )
+                .contentShape(.interaction, RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                filterPicker(title: "屬性", systemImage: "tag") {
-                    Picker("屬性", selection: $selectedAttributeType) {
-                        Text("全部屬性").tag(nil as TargetAttributeType?)
-                        ForEach(TargetAttributeType.allCases, id: \.self) { type in
-                            Text(type.title).tag(Optional(type))
-                        }
-                    }
+                Button {
+                    showFilterSheet = true
+                } label: {
+                    CircleIconButton(
+                        systemName: filterState.activeFilterCount > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle",
+                        isActive: filterState.activeFilterCount > 0
+                    )
                 }
+                .buttonStyle(.plain)
+                .contentShape(.interaction, RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
 
-            SearchInputBar(placeholder: "以屬性內容篩選", text: $attributeQuery, isFocused: $isAttributeFilterFocused)
+            if filterState.activeConditionCount > 0 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        activeConditionChips
+                    }
+                    .padding(.vertical, 2)
+                }
+                .scrollClipDisabled()
+            }
         }
-        .padding(16)
-        .background(AppColors.shared.secondaryGroupedSurface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppColors.shared.primarySurface.opacity(0.001))
+        .contentShape(.interaction, Rectangle())
+        .zIndex(10)
     }
 
-    private func filterPicker<Content: View>(
-        title: String,
-        systemImage: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .foregroundStyle(AppColors.shared.secondaryText)
+    @ViewBuilder
+    private var activeConditionChips: some View {
+        if filterState.hasKeywordFilter {
+            FilterChip(title: "關鍵字：\(filterState.keyword.trimmingCharacters(in: .whitespacesAndNewlines))") {
+                filterState.keyword = ""
+            }
+        }
 
-            content()
-                .pickerStyle(.menu)
-                .tint(AppColors.shared.primaryText)
+        if filterState.reviewDateRange != .all {
+            FilterChip(title: reviewDateRangeChipTitle) {
+                filterState.reviewDateRange = .all
+            }
         }
-        .font(.subheadline.weight(.semibold))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity)
-        .background(AppColors.shared.primarySurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(AppColors.shared.standardStroke)
+
+        if let targetType = filterState.targetType {
+            TargetTypeFilterChip(type: targetType) {
+                filterState.targetType = nil
+            }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
+
+        if filterState.hasReviewCountFilter {
+            FilterChip(title: "評論數：\(filterState.comparison.title) \(filterState.reviewCount)") {
+                filterState.comparison = .greaterOrEqual
+                filterState.reviewCount = 1
+            }
+        }
     }
 
-    private func matchesName(_ target: Target) -> Bool {
-        let query = nameQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return true }
-        return target.name.localizedStandardContains(query)
-    }
-
-    private func matchesTargetType(_ target: Target) -> Bool {
-        guard let selectedTargetType else { return true }
-        return target.type == selectedTargetType
-    }
-
-    private func matchesAttribute(_ target: Target) -> Bool {
-        let query = attributeQuery.trimmingCharacters(in: .whitespacesAndNewlines).localizedLowercase
-
-        guard selectedAttributeType != nil || !query.isEmpty else {
-            return true
+    private var reviewDateRangeChipTitle: String {
+        if filterState.reviewDateRange == .custom {
+            let start = DateFormatter.reviewDate.string(from: min(filterState.customStartDate, filterState.customEndDate))
+            let end = DateFormatter.reviewDate.string(from: max(filterState.customStartDate, filterState.customEndDate))
+            return "評論日期：\(start) - \(end)"
         }
 
-        return target.attributes.contains { attribute in
-            let typeMatches = selectedAttributeType == nil || attribute.type == selectedAttributeType
-            let searchableText = [
-                attribute.type.title,
-                attribute.displayValue,
-                attribute.secondaryValue ?? ""
-            ]
-            .joined(separator: " ")
-            .localizedLowercase
-
-            let queryMatches = query.isEmpty || searchableText.contains(query)
-            return typeMatches && queryMatches
-        }
+        return "評論日期：\(filterState.reviewDateRange.title)"
     }
 
     private func delete(_ target: Target) {
@@ -225,6 +219,144 @@ struct LibraryTabView: View {
         modelContext.delete(target)
         try? modelContext.save()
     }
+
+    private func target(withID id: UUID) -> Target? {
+        targets.first { $0.id == id }
+    }
+}
+
+private enum LibraryRoute: Hashable {
+    case create
+    case detail(UUID)
+    case edit(UUID)
+}
+
+private struct LibraryFilterSheet: View {
+    let filterState: LibraryFilterState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("分類") {
+                    Picker("分類", selection: Bindable(filterState).targetType) {
+                        Text("全部").tag(Optional<TargetType>.none)
+                        ForEach(TargetType.allCases, id: \.self) { type in
+                            Text(type.title).tag(Optional(type))
+                        }
+                    }
+                }
+                
+                Section("評論日期") {
+                    Picker("", selection: Bindable(filterState).reviewDateRange) {
+                        ForEach(ReviewUpdatedRange.allCases) { range in
+                            Text(range.title).tag(range)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+
+                    if filterState.reviewDateRange == .custom {
+                        DatePicker("開始日", selection: Bindable(filterState).customStartDate, displayedComponents: .date)
+                        DatePicker("截止日", selection: Bindable(filterState).customEndDate, displayedComponents: .date)
+                    }
+                }
+
+                Section("評論數") {
+                    Picker("條件", selection: Bindable(filterState).comparison) {
+                        ForEach(ReviewCountComparison.allCases) { comparison in
+                            Text(comparison.title).tag(comparison)
+                        }
+                    }
+                    Stepper(value: Bindable(filterState).reviewCount, in: 1...9999) {
+                        Text("數量：\(filterState.reviewCount)")
+                    }
+                }
+            }
+            .navigationTitle("篩選")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("完成", systemImage: "checkmark")
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct TargetTypeFilterChip: View {
+    let type: TargetType
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: type.librarySymbolName)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(type.color)
+
+            Text(type.title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppColors.shared.primaryText)
+                .lineLimit(1)
+
+            Button {
+                onRemove()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(AppColors.shared.secondaryText)
+                    .frame(width: 16, height: 16)
+                    .background(AppColors.shared.subtleFill, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("移除目標分類：\(type.title)")
+        }
+        .padding(.leading, 10)
+        .padding(.trailing, 6)
+        .padding(.vertical, 5)
+        .background(type.color.opacity(0.12), in: Capsule())
+        .overlay {
+            Capsule()
+                .strokeBorder(type.color.opacity(0.22))
+        }
+    }
+}
+
+struct FilterChip: View {
+    let title: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppColors.shared.primaryText)
+                .lineLimit(1)
+
+            Button {
+                onRemove()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(AppColors.shared.secondaryText)
+                    .frame(width: 16, height: 16)
+                    .background(AppColors.shared.subtleFill, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("移除\(title)")
+        }
+        .padding(.leading, 10)
+        .padding(.trailing, 6)
+        .padding(.vertical, 5)
+        .background(AppColors.shared.secondaryGroupedSurface, in: Capsule())
+        .overlay {
+            Capsule()
+                .strokeBorder(AppColors.shared.standardStroke)
+        }
+    }
 }
 
 private struct LibraryTargetCard: View {
@@ -232,19 +364,7 @@ private struct LibraryTargetCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Group {
-                if let image = uiImage(from: target.primaryPhoto) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    Image(.placeholder)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(28)
-                        .background(AppColors.shared.defaultImageAverageFill)
-                }
-            }
+            AttachmentImage(attachment: target.primaryPhoto, contentMode: .fill, placeholderPadding: 28)
             .frame(height: 170)
             .frame(maxWidth: .infinity)
             .clipped()
@@ -269,7 +389,6 @@ private struct LibraryTargetCard: View {
                         Text(target.type.title)
                             .font(.caption.weight(.bold))
                     }
-//                    .padding(.vertical, 7)
                     
                     Label("\(target.reviews.count) 則評論", systemImage: "text.bubble")
 

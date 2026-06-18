@@ -16,24 +16,12 @@ struct ReviewDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 if let target = review.target {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(target.name)
-                            .font(.title2.bold())
-
-                        Text(target.summaryText)
-                            .font(.subheadline)
-                            .foregroundStyle(AppColors.shared.secondaryText)
-
-                        NavigationLink {
-                            TargetDetailView(target: target)
-                        } label: {
-                            Text("查看完整目標資訊")
-                                .font(.subheadline.bold())
-                        }
+                    NavigationLink {
+                        TargetDetailView(target: target)
+                    } label: {
+                        ReviewTargetInfoCard(target: target)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(20)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .buttonStyle(.plain)
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
@@ -61,13 +49,9 @@ struct ReviewDetailView: View {
                                     Button {
                                         selectedPhotoIndex = index
                                     } label: {
-                                        if let image = UIImage(data: attachment.data) {
-                                            Image(uiImage: image)
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 180, height: 180)
-                                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                                        }
+                                        AttachmentImage(attachment: attachment, contentMode: .fill, placeholderPadding: 28)
+                                            .frame(width: 180, height: 180)
+                                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -129,6 +113,51 @@ struct ReviewDetailView: View {
     }
 }
 
+private struct ReviewTargetInfoCard: View {
+    let target: Target
+
+    private var descriptionText: String? {
+        target.descriptions?.nilIfEmpty
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            AttachmentImage(attachment: target.primaryPhoto, contentMode: .fill, placeholderPadding: 14)
+            .frame(width: 82, height: 82)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(target.name)
+                    .font(.headline)
+                    .foregroundStyle(AppColors.shared.primaryText)
+                    .lineLimit(2)
+
+                Text(target.summaryText)
+                    .font(.subheadline)
+                    .foregroundStyle(AppColors.shared.secondaryText)
+                    .lineLimit(1)
+
+                if let descriptionText {
+                    Text(descriptionText)
+                        .font(.footnote)
+                        .foregroundStyle(AppColors.shared.secondaryText)
+                        .lineLimit(2)
+                        .padding(.top, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(AppColors.shared.secondaryText)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .contentShape(.interaction, RoundedRectangle(cornerRadius: 26, style: .continuous))
+    }
+}
+
 struct TargetDetailView: View {
     let target: Target
 
@@ -152,6 +181,8 @@ struct TargetDetailView: View {
                 }
 
                 TargetLinksSection(links: target.linkAttributes)
+
+                TargetReviewsSection(target: target)
             }
             .padding(20)
         }
@@ -220,14 +251,10 @@ private struct TargetDetailPhotoStrip: View {
                     Button {
                         selectedPhotoIndex = 0
                     } label: {
-                        if let image = UIImage(data: attachment.data) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 240)
-                                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                        }
+                        AttachmentImage(attachment: attachment, contentMode: .fill, placeholderPadding: 32)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 240)
+                            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -237,13 +264,9 @@ private struct TargetDetailPhotoStrip: View {
                                 Button {
                                     selectedPhotoIndex = index
                                 } label: {
-                                    if let image = UIImage(data: attachment.data) {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 280, height: 240)
-                                            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                                    }
+                                    AttachmentImage(attachment: attachment, contentMode: .fill, placeholderPadding: 32)
+                                        .frame(width: 280, height: 240)
+                                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -332,7 +355,7 @@ private struct TargetAddressSection: View {
                     Text(coordinate.displayText)
                         .font(.caption)
                         .foregroundStyle(AppColors.shared.secondaryText)
-                        .padding(.bottom, 4)
+                        .padding(.bottom, 8)
 
                     Map(position: $mapPosition) {
                         Marker(targetName, coordinate: coordinate)
@@ -390,6 +413,211 @@ private struct TargetLinksSection: View {
     }
 }
 
+private struct TargetReviewsSection: View {
+    let target: Target
+
+    @AppStorage(RatingStandard.key0To1) private var rating0To1 = ""
+    @AppStorage(RatingStandard.key1To2) private var rating1To2 = ""
+    @AppStorage(RatingStandard.key2To3) private var rating2To3 = ""
+    @AppStorage(RatingStandard.key3To4) private var rating3To4 = ""
+    @AppStorage(RatingStandard.key4To5) private var rating4To5 = ""
+    @State private var selectedReviewCount: Int?
+
+    private var sortedReviews: [Review] {
+        target.reviews.sorted { lhs, rhs in
+            if lhs.reviewCount == rhs.reviewCount {
+                return lhs.watched > rhs.watched
+            }
+            return lhs.reviewCount < rhs.reviewCount
+        }
+    }
+
+    private var reviewCountOptions: [Int] {
+        Array(Set(target.reviews.map(\.reviewCount))).sorted()
+    }
+
+    private var visibleReviews: [Review] {
+        guard let selectedReviewCount else { return sortedReviews }
+        return sortedReviews.filter { $0.reviewCount == selectedReviewCount }
+    }
+
+    private var averageScoreText: String {
+        guard !target.reviews.isEmpty else { return "尚未評分" }
+        let average = target.reviews.map(\.score).reduce(0, +) / Double(target.reviews.count)
+        return String(format: "%.1f   ", average)
+    }
+
+    private var ratingTexts: [String] {
+        [rating0To1, rating1To2, rating2To3, rating3To4, rating4To5]
+    }
+
+    var body: some View {
+        DetailSectionCard(title: "評論") {
+            VStack(alignment: .leading, spacing: 6) {
+                
+                HStack(alignment: .center) {
+                    Text("平均評分")
+                        .foregroundStyle(AppColors.shared.secondaryText)
+                    Spacer()
+                    Text(averageScoreText)
+                }
+
+                HStack {
+                    Text("顯示評論")
+                        .foregroundStyle(AppColors.shared.secondaryText)
+
+                    Spacer()
+
+                    Picker("顯示評論", selection: $selectedReviewCount) {
+                        Text("全部").tag(Optional<Int>.none)
+
+                        ForEach(reviewCountOptions, id: \.self) { count in
+                            Text("第 \(count) 次評論").tag(Optional(count))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .pickerStyle(.menu)
+                    .disabled(reviewCountOptions.isEmpty)
+                    .tint(AppColors.shared.primaryText)
+                }
+                .padding(.bottom, 10)
+
+                if visibleReviews.isEmpty {
+                    Text("尚無評論內容")
+                        .font(.body)
+                        .foregroundStyle(AppColors.shared.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 6)
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(visibleReviews) { review in
+                            TargetReviewSummaryCard(
+                                review: review,
+                                ratingText: RatingStandard.text(for: review.score, customTexts: ratingTexts)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct TargetReviewSummaryCard: View {
+    let review: Review
+    let ratingText: String
+
+    @Environment(\.modelContext) private var modelContext
+    @State private var isShowingReviewDetail = false
+    @State private var isShowingEditSheet = false
+    @State private var isShowingDeleteAlert = false
+
+    private var actionDateTitle: String {
+        review.target?.type.actionDateTitle ?? "體驗日期"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    NavigationLink {
+                        ReviewDetailView(review: review)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(ratingText)
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .font(.headline)
+                        .foregroundStyle(AppColors.shared.primaryText)
+                    }
+                    .buttonStyle(.plain)
+
+                    Text("\(actionDateTitle)：\(DateFormatter.reviewDate.string(from: review.watched))")
+                        .font(.caption)
+                        .foregroundStyle(AppColors.shared.secondaryText)
+
+                    Text("評論日期：\(DateFormatter.reviewDate.string(from: review.created))")
+                        .font(.caption)
+                        .foregroundStyle(AppColors.shared.secondaryText)
+                }
+
+                Spacer()
+
+                Label(String(format: "%.1f 分", review.score), systemImage: "star.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(AppColors.shared.score)
+            }
+            .padding(.bottom, 7)
+            
+            if !review.comment.isEmpty {
+                Text(review.comment)
+                    .font(.body)
+                    .foregroundStyle(AppColors.shared.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if !review.photos.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(Array(review.photos.enumerated()), id: \.offset) { _, attachment in
+                            AttachmentImage(attachment: attachment, contentMode: .fill, placeholderPadding: 18)
+                                .frame(width: 112, height: 112)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppColors.shared.secondaryGroupedSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(AppColors.shared.standardStroke)
+        }
+        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .contextMenu {
+            Button {
+                isShowingReviewDetail = true
+            } label: {
+                Label("查看", systemImage: "eye")
+            }
+
+            Button {
+                isShowingEditSheet = true
+            } label: {
+                Label("編輯", systemImage: "square.and.pencil")
+            }
+
+            Button(role: .destructive) {
+                isShowingDeleteAlert = true
+            } label: {
+                Label("刪除", systemImage: "trash")
+            }
+        }
+        .navigationDestination(isPresented: $isShowingReviewDetail) {
+            ReviewDetailView(review: review)
+        }
+        .sheet(isPresented: $isShowingEditSheet) {
+            NavigationStack {
+                ReviewFormView(mode: .edit(review: review))
+            }
+        }
+        .alert("確定刪除這則評論嗎？", isPresented: $isShowingDeleteAlert) {
+            Button("取消", role: .cancel) {}
+            Button("刪除", role: .destructive) {
+                review.target?.reviews.removeAll { $0.id == review.id }
+                modelContext.delete(review)
+                try? modelContext.save()
+            }
+        } message: {
+            Text("刪除後將無法復原。")
+        }
+    }
+}
+
 private struct TargetLinkRow: View {
     let link: TargetLinkItem
 
@@ -432,7 +660,7 @@ private struct DetailSectionCard<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.title3.bold())
 

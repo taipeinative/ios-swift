@@ -62,9 +62,53 @@ class Target: Identifiable {
     }
 }
 
+enum PhotoAttachmentKind: String, Codable, Hashable {
+    case local
+    case remote
+}
+
 struct PhotoAttachment: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
-    var data: Data
+    var kind: PhotoAttachmentKind = .local
+    var data: Data?
+    var urlString: String?
+
+    init(id: UUID = UUID(), data: Data) {
+        self.id = id
+        self.kind = .local
+        self.data = data
+        self.urlString = nil
+    }
+
+    init(id: UUID = UUID(), urlString: String) {
+        self.id = id
+        self.kind = .remote
+        self.data = nil
+        self.urlString = urlString
+    }
+
+    var url: URL? {
+        guard let urlString = urlString?.nilIfEmpty else { return nil }
+        if let url = URL(string: urlString), url.scheme != nil {
+            return url
+        }
+        return URL(string: "https://\(urlString)")
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case kind
+        case data
+        case urlString
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        data = try container.decodeIfPresent(Data.self, forKey: .data)
+        urlString = try container.decodeIfPresent(String.self, forKey: .urlString)
+        kind = try container.decodeIfPresent(PhotoAttachmentKind.self, forKey: .kind) ?? (data == nil ? .remote : .local)
+    }
 }
 
 struct TargetAttributeData: Codable, Identifiable, Hashable {

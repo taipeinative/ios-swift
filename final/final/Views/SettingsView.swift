@@ -4,6 +4,11 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @AppStorage("appTheme") private var appThemeRawValue = ThemeOption.system.rawValue
+    @AppStorage(RatingStandard.key0To1) private var rating0To1 = ""
+    @AppStorage(RatingStandard.key1To2) private var rating1To2 = ""
+    @AppStorage(RatingStandard.key2To3) private var rating2To3 = ""
+    @AppStorage(RatingStandard.key3To4) private var rating3To4 = ""
+    @AppStorage(RatingStandard.key4To5) private var rating4To5 = ""
     @Query(sort: \Review.created, order: .forward) private var reviews: [Review]
     @Query(sort: \Target.name, order: .forward) private var targets: [Target]
     @Environment(\.modelContext) private var modelContext
@@ -13,6 +18,7 @@ struct SettingsView: View {
     @State private var isImporting = false
     @State private var importError: String?
     @State private var showImportAlert = false
+    @AppStorage("isReplacingAppData") private var isReplacingAppData = false
 
     private var totalPoints: Int {
         reviews.reduce(into: 0) { partialResult, review in
@@ -34,6 +40,7 @@ struct SettingsView: View {
             VStack(spacing: 24) {
                 levelCard
                 themeSection
+                ratingStandardSection
                 dataSection
             }
             .padding(20)
@@ -47,19 +54,56 @@ struct SettingsView: View {
             defaultFilename: "ReviewJournalBackup"
         ) { _ in }
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.json]) { result in
-            do {
-                let url = try result.get()
-                let data = try Data(contentsOf: url)
-                try importPayload(data)
-            } catch {
-                importError = error.localizedDescription
-                showImportAlert = true
+            Task { @MainActor in
+                do {
+                    let url = try result.get()
+                    let data = try Data(contentsOf: url)
+                    isReplacingAppData = true
+                    await Task.yield()
+                    try importPayload(data)
+                    isReplacingAppData = false
+                } catch {
+                    isReplacingAppData = false
+                    importError = Self.userFriendlyImportErrorMessage(for: error)
+                    showImportAlert = true
+                }
             }
         }
         .alert("匯入失敗", isPresented: $showImportAlert, presenting: importError) { _ in
             Button("知道了", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+    }
+
+    private var ratingStandardSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("評分標準")
+                    .font(.headline)
+
+                Text("留白時會使用預設評語，這些文字會顯示在目標詳情的評論列表中。")
+                    .font(.footnote)
+                    .foregroundStyle(AppColors.shared.secondaryText)
+            }
+
+            HStack(alignment: .top, spacing: 14) {
+                RatingScaleGuide()
+
+                VStack(spacing: 10) {
+                    RatingStandardField(text: $rating0To1, placeholder: RatingStandard.defaultTexts[0], accessibilityRange: "0 到 1 分")
+                    RatingStandardField(text: $rating1To2, placeholder: RatingStandard.defaultTexts[1], accessibilityRange: "1 到 2 分")
+                    RatingStandardField(text: $rating2To3, placeholder: RatingStandard.defaultTexts[2], accessibilityRange: "2 到 3 分")
+                    RatingStandardField(text: $rating3To4, placeholder: RatingStandard.defaultTexts[3], accessibilityRange: "3 到 4 分")
+                    RatingStandardField(text: $rating4To5, placeholder: RatingStandard.defaultTexts[4], accessibilityRange: "4 到 5 分")
+                }
+            }
+        }
+        .padding(20)
+        .background(AppColors.shared.primarySurface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(AppColors.shared.standardStroke)
         }
     }
 
@@ -153,14 +197,18 @@ struct SettingsView: View {
 
     private func importPayload(_ data: Data) throws {
         let payload = try JSONDecoder().decode(ExportPayload.self, from: data)
+        let reviewsToDelete = Array(reviews)
+        let targetsToDelete = Array(targets)
 
-        for review in reviews {
+        for review in reviewsToDelete {
             modelContext.delete(review)
         }
 
-        for target in targets {
+        for target in targetsToDelete {
             modelContext.delete(target)
         }
+
+        try modelContext.save()
 
         var targetMap: [UUID: Target] = [:]
         for snapshot in payload.targets {
@@ -194,5 +242,116 @@ struct SettingsView: View {
         }
 
         try modelContext.save()
+    }
+}
+
+private extension SettingsView {
+    static func userFriendlyImportErrorMessage(for error: Error) -> String {
+        if let decodingError = error as? DecodingError {
+            return decodingErrorMessage(for: decodingError)
+        }
+
+        return error.localizedDescription
+    }
+
+    static func decodingErrorMessage(for error: DecodingError) -> String {
+        switch error {
+        case .keyNotFound(let key, let context):
+            return "缺少必要欄位：\(jsonPath(from: context.codingPath + [key]))。"
+        case .typeMismatch(let type, let context):
+            return "欄位型別不正確：\(jsonPath(from: context.codingPath))，預期為 \(friendlyTypeName(type))。"
+        case .valueNotFound(let type, let context):
+            return "欄位內容為空：\(jsonPath(from: context.codingPath))，預期為 \(friendlyTypeName(type))。"
+        case .dataCorrupted(let context):
+            let path = jsonPath(from: context.codingPath)
+            if path == "根物件" {
+                return "JSON 內容損毀或格式不正確，無法讀取根物件。"
+            }
+            return "欄位資料格式不正確：\(path)。"
+        @unknown default:
+            return "JSON 格式不正確，無法完成匯入。"
+        }
+    }
+
+    static func jsonPath(from codingPath: [CodingKey]) -> String {
+        guard !codingPath.isEmpty else { return "根物件" }
+
+        return codingPath.reduce(into: "") { partialResult, key in
+            if let index = key.intValue {
+                partialResult += "[\(index)]"
+            } else {
+                if !partialResult.isEmpty {
+                    partialResult += "."
+                }
+                partialResult += key.stringValue
+            }
+        }
+    }
+
+    static func friendlyTypeName(_ type: Any.Type) -> String {
+        switch String(describing: type) {
+        case "String":
+            return "文字"
+        case "Int":
+            return "整數"
+        case "Double":
+            return "小數"
+        case "UUID":
+            return "UUID"
+        case "Date":
+            return "日期"
+        case "Array<PhotoAttachment>":
+            return "圖片陣列"
+        case "Array<TargetAttributeData>":
+            return "屬性陣列"
+        case "TargetType":
+            return "目標分類"
+        case "TargetAttributeType":
+            return "屬性分類"
+        default:
+            return String(describing: type)
+        }
+    }
+}
+
+private struct RatingScaleGuide: View {
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(AppColors.shared.standardStroke)
+                .frame(width: 2, height: 250)
+                .padding(.leading, 30)
+                .padding(.top, 13)
+
+            VStack(spacing: 29) {
+                ForEach(0...5, id: \.self) { number in
+                    Text("\(number)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppColors.shared.secondaryText)
+                        .frame(width: 22, alignment: .trailing)
+                }
+            }
+        }
+        .frame(width: 42, height: 276, alignment: .topLeading)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct RatingStandardField: View {
+    @Binding var text: String
+    let placeholder: String
+    let accessibilityRange: String
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 12)
+            .frame(height: 46)
+            .background(AppColors.shared.secondaryGroupedSurface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(AppColors.shared.standardStroke)
+            }
+            .accessibilityLabel("\(accessibilityRange)的評語")
     }
 }

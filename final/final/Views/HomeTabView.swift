@@ -11,6 +11,7 @@ struct HomeTabView: View {
     @State private var editingReview: Review?
     @State private var viewingReview: Review?
     @State private var creatingReview = false
+    @State private var refreshToken = UUID()
 
     private var filteredReviews: [Review] {
         reviews.filter(filterState.matches)
@@ -49,7 +50,7 @@ struct HomeTabView: View {
                                 NavigationLink {
                                     ReviewDetailView(review: review)
                                 } label: {
-                                    ReviewCardView(review: review)
+                                    ReviewCardView(review: review, refreshToken: refreshToken)
                                 }
                                 .buttonStyle(.plain)
                                 .contextMenu {
@@ -77,6 +78,9 @@ struct HomeTabView: View {
                         .padding(.bottom, 32)
                     }
                 }
+            }
+            .refreshable {
+                refreshToken = UUID()
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
@@ -178,34 +182,77 @@ struct HomeTabView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Button {
-                router.selectedTab = .search
-            } label: {
-                AnimatedSearchButton()
-            }
-            .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Button {
+                    router.selectedTab = .search
+                } label: {
+                    AnimatedSearchButton()
+                }
+                .buttonStyle(.plain)
 
-            Button {
-                showFilterSheet = true
-            } label: {
-                CircleIconButton(
-                    systemName: filterState.activeFilterCount > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle",
-                    badgeCount: filterState.activeFilterCount,
-                    isActive: filterState.activeFilterCount > 0
-                )
-            }
-            .buttonStyle(.plain)
+                Button {
+                    showFilterSheet = true
+                } label: {
+                    CircleIconButton(
+                        systemName: filterState.activeFilterCount > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle",
+                        isActive: filterState.activeFilterCount > 0
+                    )
+                }
+                .buttonStyle(.plain)
 
-            NavigationLink {
-                SettingsView()
-            } label: {
-                CircleIconButton(systemName: "gearshape")
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    CircleIconButton(systemName: "gearshape")
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            if filterState.activeFilterCount > 0 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        activeFilterChips
+                    }
+                    .padding(.vertical, 2)
+                }
+                .scrollClipDisabled()
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 0)
+    }
+
+    @ViewBuilder
+    private var activeFilterChips: some View {
+        if filterState.updatedRange != .all {
+            FilterChip(title: updatedRangeChipTitle) {
+                filterState.updatedRange = .all
+            }
+        }
+
+        if let targetType = filterState.targetType {
+            TargetTypeFilterChip(type: targetType) {
+                filterState.targetType = nil
+            }
+        }
+
+        if filterState.hasReviewCountFilter {
+            FilterChip(title: "評論次數：\(filterState.comparison.title) \(filterState.reviewCount)") {
+                filterState.comparison = .greaterOrEqual
+                filterState.reviewCount = 1
+            }
+        }
+    }
+
+    private var updatedRangeChipTitle: String {
+        if filterState.updatedRange == .custom {
+            let start = DateFormatter.reviewDate.string(from: min(filterState.customStartDate, filterState.customEndDate))
+            let end = DateFormatter.reviewDate.string(from: max(filterState.customStartDate, filterState.customEndDate))
+            return "評論日期：\(start) - \(end)"
+        }
+
+        return "評論日期：\(filterState.updatedRange.title)"
     }
 }
 
@@ -216,6 +263,15 @@ struct ReviewFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("分類") {
+                    Picker("分類", selection: Bindable(filterState).targetType) {
+                        Text("全部").tag(Optional<TargetType>.none)
+                        ForEach(TargetType.allCases, id: \.self) { type in
+                            Text(type.title).tag(Optional(type))
+                        }
+                    }
+                }
+                
                 Section("評論日期") {
                     Picker("", selection: Bindable(filterState).updatedRange) {
                         ForEach(ReviewUpdatedRange.allCases) { range in
@@ -228,15 +284,6 @@ struct ReviewFilterSheet: View {
                     if filterState.updatedRange == .custom {
                         DatePicker("開始日", selection: Bindable(filterState).customStartDate, displayedComponents: .date)
                         DatePicker("截止日", selection: Bindable(filterState).customEndDate, displayedComponents: .date)
-                    }
-                }
-
-                Section("目標類型") {
-                    Picker("類型", selection: Bindable(filterState).targetType) {
-                        Text("全部").tag(Optional<TargetType>.none)
-                        ForEach(TargetType.allCases, id: \.self) { type in
-                            Text(type.title).tag(Optional(type))
-                        }
                     }
                 }
 
@@ -267,7 +314,16 @@ struct ReviewFilterSheet: View {
 
 struct ReviewCardView: View {
     let review: Review
+    let refreshToken: UUID
     @State private var averageColor = AppColors.shared.defaultImageAverageFill
+
+    private var imageRefreshKey: String {
+        refreshToken.uuidString
+    }
+
+    private var averageColorTaskID: String {
+        "\(review.id.uuidString)-\(review.primaryPhoto?.id.uuidString ?? "none")-\(imageRefreshKey)"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -275,23 +331,20 @@ struct ReviewCardView: View {
                 Rectangle()
                     .fill(averageColor)
 
-                if let image = uiImage(from: review.primaryPhoto) ?? UIImage(named: "Placeholder") {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    Image(.placeholder)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(24)
-                }
+                AttachmentImage(
+                    attachment: review.primaryPhoto,
+                    contentMode: .fit,
+                    placeholderPadding: 24,
+                    refreshKey: imageRefreshKey
+                )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(height: 220)
-            .task(id: review.id) {
-                if let image = uiImage(from: review.primaryPhoto) ?? UIImage(named: "Placeholder"),
-                   let color = await extractAverageColor(from: image) {
+            .task(id: averageColorTaskID) {
+                if let color = await extractAverageColorColorKit(from: review.primaryPhoto) {
                     averageColor = color.opacity(0.35)
+                } else {
+                    averageColor = AppColors.shared.defaultImageAverageFill
                 }
             }
 

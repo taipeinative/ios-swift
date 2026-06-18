@@ -1,3 +1,4 @@
+import ColorKit
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import Foundation
@@ -175,6 +176,32 @@ enum ReviewUpdatedRange: String, CaseIterable, Identifiable {
     }
 }
 
+enum RatingStandard {
+    static let key0To1 = "ratingStandard0To1"
+    static let key1To2 = "ratingStandard1To2"
+    static let key2To3 = "ratingStandard2To3"
+    static let key3To4 = "ratingStandard3To4"
+    static let key4To5 = "ratingStandard4To5"
+
+    static let defaultTexts = [
+        "糟透了",
+        "不太喜歡",
+        "普普通通",
+        "很不錯",
+        "棒透了"
+    ]
+
+    static func text(for score: Double, customTexts: [String]) -> String {
+        let index = index(for: score)
+        let customText = customTexts[safe: index]?.nilIfEmpty
+        return customText ?? defaultTexts[index]
+    }
+
+    private static func index(for score: Double) -> Int {
+        min(4, max(0, Int(score.rounded(.down))))
+    }
+}
+
 @Observable
 final class ReviewFilterState {
     var updatedRange: ReviewUpdatedRange = .all
@@ -227,6 +254,104 @@ final class ReviewFilterState {
         let calendar = Calendar.current
 
         switch updatedRange {
+        case .all:
+            return true
+        case .sevenDays:
+            return date >= (calendar.date(byAdding: .day, value: -7, to: now) ?? .distantPast)
+        case .thirtyDays:
+            return date >= (calendar.date(byAdding: .day, value: -30, to: now) ?? .distantPast)
+        case .oneYear:
+            return date >= (calendar.date(byAdding: .year, value: -1, to: now) ?? .distantPast)
+        case .custom:
+            let start = calendar.startOfDay(for: min(customStartDate, customEndDate))
+            let endDay = calendar.startOfDay(for: max(customStartDate, customEndDate))
+            let end = calendar.date(byAdding: .day, value: 1, to: endDay) ?? endDay
+            return date >= start && date < end
+        }
+    }
+}
+
+@Observable
+final class LibraryFilterState {
+    var keyword: String = ""
+    var reviewDateRange: ReviewUpdatedRange = .all
+    var targetType: TargetType? = nil
+    var comparison: ReviewCountComparison = .greaterOrEqual
+    var reviewCount: Int = 1
+    var customStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now
+    var customEndDate: Date = .now
+
+    var normalizedKeyword: String {
+        keyword.trimmingCharacters(in: .whitespacesAndNewlines).localizedLowercase
+    }
+
+    var hasKeywordFilter: Bool {
+        !normalizedKeyword.isEmpty
+    }
+
+    var hasReviewCountFilter: Bool {
+        !(comparison == .greaterOrEqual && reviewCount == 1)
+    }
+
+    var activeFilterCount: Int {
+        var count = 0
+        if reviewDateRange != .all {
+            count += 1
+        }
+        if targetType != nil {
+            count += 1
+        }
+        if hasReviewCountFilter {
+            count += 1
+        }
+        return count
+    }
+
+    var activeConditionCount: Int {
+        activeFilterCount + (hasKeywordFilter ? 1 : 0)
+    }
+
+    func matches(_ target: Target) -> Bool {
+        guard matchesKeyword(target) else { return false }
+        guard matchesReviewDateRange(target) else { return false }
+        guard matchesTargetType(target) else { return false }
+        return matchesReviewCount(target)
+    }
+
+    private func matchesKeyword(_ target: Target) -> Bool {
+        guard hasKeywordFilter else { return true }
+        return target.searchableText.contains(normalizedKeyword)
+    }
+
+    private func matchesTargetType(_ target: Target) -> Bool {
+        guard let targetType else { return true }
+        return target.type == targetType
+    }
+
+    private func matchesReviewCount(_ target: Target) -> Bool {
+        guard hasReviewCountFilter else { return true }
+
+        switch comparison {
+        case .lessOrEqual:
+            return target.reviews.count <= reviewCount
+        case .equal:
+            return target.reviews.count == reviewCount
+        case .greaterOrEqual:
+            return target.reviews.count >= reviewCount
+        }
+    }
+
+    private func matchesReviewDateRange(_ target: Target, now: Date = .now) -> Bool {
+        guard reviewDateRange != .all else { return true }
+        return target.reviews.contains { review in
+            matches(date: review.watched, now: now)
+        }
+    }
+
+    private func matches(date: Date, now: Date) -> Bool {
+        let calendar = Calendar.current
+
+        switch reviewDateRange {
         case .all:
             return true
         case .sevenDays:
@@ -321,9 +446,89 @@ func extractAverageColor(from image: UIImage) async -> Color? {
     )
 }
 
+func extractAverageColorColorKit(from image: UIImage) async -> Color? {
+    guard let rgbImage = toRgbImageColorKit(from: image) else {
+        return nil
+    }
+
+    guard let color = try? rgbImage.averageColor() else {
+        return nil
+    }
+
+    return Color(uiColor: color)
+}
+
+func extractAverageColorColorKit(from attachment: PhotoAttachment?) async -> Color? {
+    guard let image = await loadUIImage(from: attachment) else {
+        return nil
+    }
+
+    return await extractAverageColorColorKit(from: image)
+}
+
+func toRgbImageColorKit(from image: UIImage) -> UIImage? {
+    guard let cgImage = image.cgImage else { return nil }
+
+    let width = cgImage.width
+    let height = cgImage.height
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+
+    guard let context = CGContext(
+        data: nil,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: width * 4,
+        space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else {
+        return nil
+    }
+
+    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+    guard let rgbCGImage = context.makeImage() else {
+        return nil
+    }
+
+    return UIImage(cgImage: rgbCGImage)
+}
+
 func uiImage(from attachment: PhotoAttachment?) -> UIImage? {
-    guard let attachment else { return nil }
-    return UIImage(data: attachment.data)
+    guard let data = attachment?.data else { return nil }
+    return UIImage(data: data)
+}
+
+func loadUIImage(from attachment: PhotoAttachment?) async -> UIImage? {
+    if let image = uiImage(from: attachment) {
+        return image
+    }
+
+    guard let url = attachment?.url else {
+        return nil
+    }
+
+    var request = URLRequest(url: url)
+    request.cachePolicy = .reloadIgnoringLocalCacheData
+
+    guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+        return nil
+    }
+
+    if let httpResponse = response as? HTTPURLResponse,
+       !(200..<300).contains(httpResponse.statusCode) {
+        return nil
+    }
+
+    return UIImage(data: data)
+}
+
+func extractAverageColor(from attachment: PhotoAttachment?) async -> Color? {
+    guard let image = await loadUIImage(from: attachment) else {
+        return nil
+    }
+
+    return await extractAverageColor(from: image)
 }
 
 func loadPhotoAttachments(
@@ -344,6 +549,103 @@ func loadPhotoAttachments(
     }
 
     return Array(attachments.prefix(limit))
+}
+
+struct AttachmentImage: View {
+    let attachment: PhotoAttachment?
+    var contentMode: ContentMode = .fill
+    var placeholderPadding: CGFloat = 0
+    var refreshKey = ""
+
+    var body: some View {
+        Group {
+            if let image = uiImage(from: attachment) {
+                configuredImage(Image(uiImage: image))
+            } else if let url = attachment?.url {
+                RemoteAttachmentImage(
+                    url: url,
+                    contentMode: contentMode,
+                    placeholderPadding: placeholderPadding,
+                    refreshKey: refreshKey
+                )
+            } else {
+                placeholder
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func configuredImage(_ image: Image) -> some View {
+        image
+            .resizable()
+            .aspectRatio(contentMode: contentMode)
+    }
+
+    private var placeholder: some View {
+        Image(.placeholder)
+            .resizable()
+            .scaledToFit()
+            .padding(placeholderPadding)
+            .background(AppColors.shared.defaultImageAverageFill)
+    }
+}
+
+private struct RemoteAttachmentImage: View {
+    let url: URL
+    let contentMode: ContentMode
+    let placeholderPadding: CGFloat
+    let refreshKey: String
+
+    @State private var image: UIImage?
+    @State private var didFail = false
+
+    private var taskID: String {
+        "\(url.absoluteString)-\(refreshKey)"
+    }
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: contentMode)
+            } else if didFail {
+                placeholder
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task(id: taskID) {
+            await loadImage()
+        }
+    }
+
+    @MainActor
+    private func loadImage() async {
+        image = nil
+        didFail = false
+
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
+              let loadedImage = UIImage(data: data) else {
+            didFail = true
+            return
+        }
+
+        image = loadedImage
+    }
+
+    private var placeholder: some View {
+        Image(.placeholder)
+            .resizable()
+            .scaledToFit()
+            .padding(placeholderPadding)
+            .background(AppColors.shared.defaultImageAverageFill)
+    }
 }
 
 extension DateFormatter {
